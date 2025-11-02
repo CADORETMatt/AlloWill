@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Visualiseur Scene Pixel Art</title>
+    <style>
+        canvas {
+            border: 1px solid #000;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h2>Visualisation de Scene Pixel Art</h2>
+    <canvas id="canvas1" width="1000" height="250"></canvas>
+
+    <script>
+
+        // Fonction pour charger un fichier JSON externe et retourner un objet JS
+        function LoadJsonImg(jsonUrl, callback) {
+            fetch(jsonUrl)
+                .then(response => {
+                    if (!response.ok) throw new Error('Erreur chargement JSON');
+                    return response.json();
+                })
+                .then(data => callback(data))
+                .catch(error => console.error('Erreur :', error));
+        }
+
+        // Fonction pour dessiner la scène sur le canvas
+        function AffJsonImg(canvasID, sceneObj) {
+            const canvas = document.getElementById(canvasID);
+            if (!canvas) {
+                console.error('Canvas non trouvé:', canvasID);
+                return;
+            }
+            const ctx = canvas.getContext('2d');
+
+            // Effacer le canvas avant de dessiner
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const width = sceneObj.width;
+            const height = sceneObj.height;
+
+            // Dessiner le décor principal (draw[x][y])
+            for (let x = 0; x < width; x++) {
+                for (let y = 0; y < height; y++) {
+                    const color = sceneObj.draw[x][y];
+                    if (color) {
+                        ctx.fillStyle = color;
+                        ctx.fillRect(x, y, 1, 1);
+                    }
+                }
+            }
+
+            /* // Dessiner les éléments animés (animX) mais ici fixes, sans animation
+             if (sceneObj.anims && Array.isArray(sceneObj.anims)) {
+                 sceneObj.anims.forEach(anim => {
+                     for (let x = 0; x < anim.w; x++) {
+                         for (let y = 0; y < anim.h; y++) {
+                             const color = anim.draw[x][y];
+                             if (color) {
+                                 ctx.fillStyle = color;
+                                 ctx.fillRect(anim.x + x, anim.y + y, 1, 1);
+                             }
+                         }
+                     }
+                 });
+             }*/
+        }
+
+        // Exemple d'utilisation :
+        // LoadJsonImg('Scene1.json', scene1 => AffJsonImg('canvas1', scene1));
+
+    </script>
+
+</body>
+
+</html>

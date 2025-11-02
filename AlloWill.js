@@ -4,6 +4,22 @@ const ctx = canvas.getContext("2d");
 const WIDTH = canvas.width;
 const HEIGHT = canvas.height;
 
+
+/*Algo - A PLACER
+        ///////////////////////////////////////
+        -
+        ----------------------------------------
+        ALGO
+        ----------------------------------------
+        *-ECRAN DE DEMARRAGE (LOGO MATTMARKETDIGITALS)*/
+//Chargement image décor
+const Decor1 = new Image();      //VOIR DANS FUNCTION DRAW
+Decor1.src = 'Asset1-1.bmp'; // Chemin vers BMP ou PNG
+alert("Push on keyboard for start");
+
+/*        **fondu
+        *-MENU 
+*/
 // --- PLAYER ---
 const player = { x: 70, y: 100, w: 16, h: 16, speed: 1.2 };
 
@@ -33,7 +49,7 @@ function update() {
   player.y = Math.max(0, Math.min(HEIGHT - player.h, player.y));
 
   // Timer
-  timeLeft -= 1/60;
+  timeLeft -= 1 / 60;
   if (timeLeft <= 0) endGame(false);
 
   // Check "tâches"
@@ -44,10 +60,35 @@ function update() {
   }
 }
 
+//**JEU***********************************
+/*        ***INPUT
+      --***Le joueur est au centre
+        ***écran à 1000x250
+        ***affichage décor
+        ****Assets
+        ****AffBMP*/
+// Créer un objet Image
+
+//        ***affichage 250x250
+/*      ***PLACEMENTJOUEUR
+      ***COLLISION
+      **OPTIONS
+      **EXIT 
+      ***CREDITS
+.        ///////////////////////////////////////
+      */
+
+
 // --- DESSIN ---
 function draw() {
   ctx.fillStyle = "#1a1a1a";
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+  // Draw Background Image
+  //Decor1.onload = () => {
+  ctx.drawImage(Decor1, 0, 0, WIDTH, HEIGHT); // VOIR AFFDECOR
+  //ctx.drawImage(Decor1, 0, 0, 250, 250, 0, 0, 250, 250);
+  //};
 
   // Joueur
   ctx.fillStyle = "#fff";
