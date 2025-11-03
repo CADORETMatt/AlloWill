@@ -33,7 +33,7 @@ document.addEventListener("keydown", e => keys[e.key] = true);
 document.addEventListener("keyup", e => keys[e.key] = false);
 */
 // Gestion du clavier
-const keys = { left: false, right: false };
+const keys = { left: false, right: false, up: false, down: false };
 window.addEventListener("keydown", e => {
   if (e.key === "ArrowLeft") keys.left = true;
   if (e.key === "ArrowRight") keys.right = true;
@@ -46,6 +46,27 @@ window.addEventListener("keyup", e => {
   if (e.key === "ArrowUp") keys.up = false;
   if (e.key === "ArrowDown") keys.down = false;
 });
+// Gestion du tactile
+canvas.addEventListener("touchstart", e => {
+  const touch = e.touches[0];
+  const rect = canvas.getBoundingClientRect();
+  const x = touch.clientX - rect.left;
+  const y = touch.clientY - rect.top;
+
+  if (x < canvas.width / 2) keys.left = true;
+  if (x > canvas.width / 2) keys.right = true;
+  if (y < canvas.height / 2) keys.up = true;
+  if (y > canvas.height / 2) keys.down = true;
+});
+
+canvas.addEventListener("touchend", e => {
+  // On retire toutes les directions quand on lève le doigt
+  keys.left = false;
+  keys.right = false;
+  keys.up = false;
+  keys.down = false;
+});
+
 
 // --- GAME LOOP ---
 function update() {
