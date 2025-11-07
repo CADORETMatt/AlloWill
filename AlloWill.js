@@ -4,6 +4,14 @@ const ctx = canvas.getContext("2d");
 const WIDTH = canvas.width;
 const HEIGHT = canvas.height;
 
+//Adaptation mobile
+const ratio = 1000 / 250; //  décor d’origine
+// Si la hauteur dépasse l’écran, on réduit
+if (HEIGHT > window.innerHeight) {
+  HEIGHT = window.innerHeight;
+  WIDTH = HEIGHT * ratio;
+}
+
 
 /*Algo - A PLACER
         ///////////////////////////////////////
