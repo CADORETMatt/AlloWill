@@ -47,7 +47,35 @@ window.addEventListener("keyup", e => {
   if (e.key === "ArrowDown") keys.down = false;
 });
 // Gestion du tactile
-canvas.addEventListener("touchstart", e => {
+let touchDir = null; // direction du doigt (angle, distance)
+let maxSpeed = 4;    // vitesse max du déplacement
+
+canvas.addEventListener("touchstart", handleTouch);
+canvas.addEventListener("touchmove", handleTouch);
+canvas.addEventListener("touchend", () => touchDir = null);
+
+function handleTouch(e) {
+  const touch = e.touches[0];
+  const rect = canvas.getBoundingClientRect();
+  const x = touch.clientX - rect.left;
+  const y = touch.clientY - rect.top;
+
+  // coordonnées relatives au centre
+  const dx = x - WIDTH / 2;
+  const dy = y - HEIGHT / 2;
+
+  const dist = Math.hypot(dx, dy);
+  const angle = Math.atan2(dy, dx);
+
+  // on limite la distance max (500/2 = rayon max)
+  const maxDist = WIDTH / 2;
+  const intensity = Math.min(dist / maxDist, 1); // entre 0 et 1
+
+  touchDir = { angle, intensity };
+}
+
+
+/*canvas.addEventListener("touchstart", e => {
   const touch = e.touches[0];
   const rect = canvas.getBoundingClientRect();
   const x = touch.clientX - rect.left;
@@ -65,7 +93,7 @@ canvas.addEventListener("touchend", e => {
   keys.right = false;
   keys.up = false;
   keys.down = false;
-});
+});*/
 
 
 // --- GAME LOOP ---
@@ -77,6 +105,13 @@ function update() {
   if (keys.right) player.x += player.speed;
   if (keys.up) player.y -= player.speed;
   if (keys.down) player.y += player.speed;
+
+  // tactile orienté
+  if (touchDir) {
+    const speed = maxSpeed * touchDir.intensity;
+    player.x += Math.cos(touchDir.angle) * speed;
+    player.y += Math.sin(touchDir.angle) * speed;
+  }
 
   // Garder le joueur dans la vue (mais déclencher le défilement)
   if (player.x < edgeZone && cameraX > 0) {
