@@ -4,13 +4,6 @@ const ctx = canvas.getContext("2d");
 const WIDTH = canvas.width;
 const HEIGHT = canvas.height;
 
-//Adaptation mobile
-const ratio = 1000 / 250; //  décor d’origine
-// Si la hauteur dépasse l’écran, on réduit
-if (HEIGHT > window.innerHeight) {
-  HEIGHT = window.innerHeight;
-  WIDTH = HEIGHT * ratio;
-}
 
 
 /*Algo - A PLACER
@@ -219,6 +212,13 @@ function draw() {
 let cameraX = 0;        // décalage horizontal de la "vue"
 const viewWidth = 500;   // largeur de la fenêtre visible
 const decorWidth = 1000; // largeur totale du décor
+//Adaptation mobile
+//const ratio = 1000 / 250; //  décor d’origine
+// Si la largeur dépasse l’écran, on réduit
+if (viewWidth > window.innerWidth) {
+  viewWidth = window.innerWidth;
+  //HEIGHT = WIDTH * ratio;
+}
 const edgeZone = 30;          // distance au bord où le scrolling commence
 
 
