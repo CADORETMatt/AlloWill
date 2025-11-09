@@ -17,6 +17,9 @@ const HEIGHT = canvas.height;
 //Chargement image décor
 const Decor1 = new Image();      //VOIR DANS FUNCTION DRAW
 Decor1.src = 'Asset1-1.bmp'; // Chemin vers BMP ou PNG
+// image silhouette joueur
+const PlayerImg = new Image();
+PlayerImg.src = "Hum1NB.png";
 alert("Push on keyboard for start");
 
 /*        **fondu
@@ -181,21 +184,52 @@ function draw() {
     cameraX, 0, viewWidth / 2, HEIGHT / 2, // source (partie du décor)
     0, 0, viewWidth, HEIGHT        // destination (sur la "vue")
   );
-  //Filtre bleu nuit
+  /*//Filtre bleu nuit
   ctx.fillStyle = "rgba(0, 0, 80, 0.5)"; // bleu foncé avec opacité
   ctx.fillRect(0, 0, viewWidth, HEIGHT);
-
+*/
   // Draw Background Image
   //Decor1.onload = () => {
   //ctx.drawImage(Decor1, 0, 0, WIDTH, HEIGHT); // VOIR AFFDECOR
   //ctx.drawImage(Decor1, 0, 0, 250, 250, 0, 0, 250, 250);
   //};
   //Filtre bleu nuit
-  ctx.fillStyle = "rgba(0, 0, 80, 0.5)"; // bleu foncé avec opacité
+  ctx.fillStyle = "rgba(0, 0, 80, 0.7)"; // bleu foncé avec opacité
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
-  // Joueur
+  // LightTarget
   ctx.fillStyle = "#fff";
   ctx.fillRect(player.x, player.y, player.w, player.h);
+
+  /////////// Player
+  PlayerImg.onload = () => {
+    // Calcul centrage et échelle
+    const scale = Math.min(canvas.width / PlayerImg.width, canvas.height / PlayerImg.height);
+    const drawW = PlayerImg.width * scale;
+    const drawH = PlayerImg.height * scale;
+    const offsetX = (canvas.width - drawW) / 2;
+    const offsetY = (canvas.height - drawH) / 2;
+
+    // 1️⃣ Affiche l’image
+    ctx.drawImage(PlayerImg, offsetX, offsetY, drawW, drawH);
+
+    // 2️⃣ Lit ses pixels
+    const imageData = ctx.getImageData(offsetX, offsetY, drawW, drawH);
+    const data = imageData.data;
+
+    // 3️⃣ Modifie chaque pixel
+    for (let i = 0; i < data.length; i += 4) {
+      const r = data[i];
+      if (r > 200) {
+        data[i + 3] = 0; // transparent
+      } else {
+        data[i] = 0; data[i + 1] = 0; data[i + 2] = 0;
+        data[i + 3] = 255 * 0.25; // noir à 25%
+      }
+    }
+
+    // 4️⃣ Réécrit les pixels modifiés
+    ctx.putImageData(imageData, offsetX, offsetY);
+  };
 
   // Timer
   ctx.font = "20px Georgia";
