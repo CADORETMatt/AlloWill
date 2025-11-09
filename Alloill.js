@@ -12,7 +12,8 @@ let tasksDone = 0;
 let requiredTasks = 3;
 // Gestion du clavier
 const keys = { left: false, right: false, up: false, down: false };
-
+// --- PLAYER ---
+const player = { x: WIDTH / 2, y: HEIGHT / 2, w: 16, h: 16, speed: 3.1 };
 
 
 /*Algo - A PLACER
@@ -30,14 +31,13 @@ alert("Push on keyboard for start");
 */
 
 // --- INPUT ---
-/*const keys = {};
-document.addEventListener("keydown", e => keys[e.key] = true);
-document.addEventListener("keyup", e => keys[e.key] = false);
-*/
 
 GestionClavier();
-// Gestion du tactile
-let touchDir = null; // direction du doigt (angle, distance)
+
+
+
+//////function GestionTactile() {
+let touchDir = null; // direction du doigt (angle, distance) 
 let maxSpeed = 4;    // vitesse max du déplacement
 
 canvas.addEventListener("touchstart", handleTouch);
@@ -63,39 +63,13 @@ function handleTouch(e) {
 
     touchDir = { angle, intensity };
 }
-
-
-/*canvas.addEventListener("touchstart", e => {
-  const touch = e.touches[0];
-  const rect = canvas.getBoundingClientRect();
-  const x = touch.clientX - rect.left;
-  const y = touch.clientY - rect.top;
-
-  if (x < canvas.width / 2) keys.left = true;
-  if (x > canvas.width / 2) keys.right = true;
-  if (y < canvas.height / 2) keys.up = true;
-  if (y > canvas.height / 2) keys.down = true;
-});
-
-canvas.addEventListener("touchend", e => {
-  // On retire toutes les directions quand on lève le doigt
-  keys.left = false;
-  keys.right = false;
-  keys.up = false;
-  keys.down = false;
-});*/
-
+//}
 
 // --- GAME LOOP ---
 function update() {
     if (gameOver) return;
 
-    // Déplacement du joueur
-    if (keys.left) player.x -= player.speed;
-    if (keys.right) player.x += player.speed;
-    if (keys.up) player.y -= player.speed;
-    if (keys.down) player.y += player.speed;
-
+    moveClavier();
     // tactile orienté
     if (touchDir) {
         const speed = maxSpeed * touchDir.intensity;
@@ -112,29 +86,19 @@ function update() {
         if (cameraX > decorWidth - viewWidth / 2) cameraX = decorWidth - viewWidth / 2;
     }
 
-    // Empêcher le joueur de sortir complètement de la scène
-    //if (player.x < 0) player.x = 0;
-    //if (player.x > viewWidth) player.x = viewWidth;
-
-    /*if (keys["ArrowLeft"]) player.x -= player.speed;
-    if (keys["ArrowRight"]) player.x += player.speed;
-    if (keys["ArrowUp"]) player.y -= player.speed;
-    if (keys["ArrowDown"]) player.y += player.speed;*/
-
-    // Collision limites
-    player.x = Math.max(0, Math.min(viewWidth - player.w, player.x));
-    player.y = Math.max(0, Math.min(HEIGHT - player.h, player.y));
-
-    // Timer
-    timeLeft -= 1 / 60;
-    if (timeLeft <= 0) endGame(false);
-
+    
+    screenWall();
+    
+    defileTimerOrWin();
+	
     // Check "tâches"
-    if (player.x < 20 && player.y < 20 && tasksDone < requiredTasks) {
+    if  (player.x < 20 && player.y < 20 && tasksDone < requiredTasks) {
         tasksDone++;
         player.x = 70; player.y = 100; // Retour position
         if (tasksDone === requiredTasks) endGame(true);
     }
+    
+
 }
 
 //**JEU***********************************
@@ -142,7 +106,6 @@ function update() {
        ***Le joueur est au centre
 */
 // --- PLAYER ---
-const player = { x: WIDTH / 2, y: HEIGHT / 2, w: 16, h: 16, speed: 3.1 };
 
 /*     ***écran à 1000x250
        ***affichage décor
@@ -211,6 +174,7 @@ if (viewWidth > window.innerWidth) {
 const edgeZone = 30;          // distance au bord où le scrolling commence
 
 
+
 /****Effet lampe de poche
  ****Adrénaline et Endurance influt la vitesse    
  ***COLLISION
@@ -225,20 +189,6 @@ const edgeZone = 30;          // distance au bord où le scrolling commence
  ***CREDITS
 .        ///////////////////////////////////////
  */
-function GestionClavier() {
-    window.addEventListener("keydown", e => {
-        if (e.key === "ArrowLeft") keys.left = true;
-        if (e.key === "ArrowRight") keys.right = true;
-        if (e.key === "ArrowUp") keys.up = true;
-        if (e.key === "ArrowDown") keys.down = true;
-    });
-    window.addEventListener("keyup", e => {
-        if (e.key === "ArrowLeft") keys.left = false;
-        if (e.key === "ArrowRight") keys.right = false;
-        if (e.key === "ArrowUp") keys.up = false;
-        if (e.key === "ArrowDown") keys.down = false;
-    });
-}
 
 // --- FIN DE PARTIE ---
 function endGame(success) {
@@ -257,3 +207,36 @@ function loop() {
 }
 
 loop();
+
+function GestionClavier() {  // const keys = { left: false, right: false, up: false, down: false };
+    window.addEventListener("keydown", e => {
+        if (e.key === "ArrowLeft") keys.left = true;
+        if (e.key === "ArrowRight") keys.right = true;
+        if (e.key === "ArrowUp") keys.up = true;
+        if (e.key === "ArrowDown") keys.down = true;
+    });
+    window.addEventListener("keyup", e => {
+        if (e.key === "ArrowLeft") keys.left = false;
+        if (e.key === "ArrowRight") keys.right = false;
+        if (e.key === "ArrowUp") keys.up = false;
+        if (e.key === "ArrowDown") keys.down = false;
+    });
+}
+
+ function moveClavier () {
+  //const player = { x: WIDTH / 2, y: HEIGHT / 2, w: 16, h: 16, speed: 3.1 };
+    if (keys.left) player.x -= player.speed;
+    if (keys.right) player.x += player.speed;
+    if (keys.up) player.y -= player.speed;
+    if (keys.down) player.y += player.speed;
+  }
+   
+ function screenWall(){ //player{},viewWidth,HEIGHT
+		player.x = Math.max(0, Math.min(viewWidth - player.w, player.x));
+		player.y = Math.max(0, Math.min(HEIGHT - player.h, player.y));
+    }
+
+    function defileTimerOrWin() { //timeLeft, endGame()
+		timeLeft -= 1 / 60;
+		if (timeLeft <= 0) endGame(false);
+	}
