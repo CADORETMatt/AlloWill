@@ -5,6 +5,10 @@ const HEIGHT = canvas.height;
 //Chargement image décor
 const Decor1 = new Image();      //VOIR DANS FUNCTION DRAW
 Decor1.src = 'Asset1-1.bmp'; // Chemin vers BMP ou PNG
+// image silhouette joueur
+const PlayerImg = new Image();
+PlayerImg.crossOrigin = "anonymous"; // avant .src
+PlayerImg.src = "Hum1NB.png";
 // --- GAME STATE ---
 let timeLeft = 60;
 let gameOver = false;
@@ -25,17 +29,10 @@ const player = { x: WIDTH / 2, y: HEIGHT / 2, w: 16, h: 16, speed: 3.1 };
         ----------------------------------------
         *-ECRAN DE DEMARRAGE (LOGO MATTMARKETDIGITALS)*/
 alert("Push on keyboard for start");
-
-/*        **fondu
-        *-MENU *******************************
-*/
-
+//        **fondu
+        //*-MENU *******************************
 // --- INPUT ---
-
 GestionClavier();
-
-
-
 //////function GestionTactile() {
 let touchDir = null; // direction du doigt (angle, distance) 
 let maxSpeed = 4;    // vitesse max du déplacement
@@ -43,32 +40,9 @@ let maxSpeed = 4;    // vitesse max du déplacement
 canvas.addEventListener("touchstart", handleTouch);
 canvas.addEventListener("touchmove", handleTouch);
 canvas.addEventListener("touchend", () => touchDir = null);
-
-function handleTouch(e) {
-    const touch = e.touches[0];
-    const rect = canvas.getBoundingClientRect();
-    const x = touch.clientX - rect.left;
-    const y = touch.clientY - rect.top;
-
-    // coordonnées relatives au centre
-    const dx = x - WIDTH / 2;
-    const dy = y - HEIGHT / 2;
-
-    const dist = Math.hypot(dx, dy);
-    const angle = Math.atan2(dy, dx);
-
-    // on limite la distance max (500/2 = rayon max)
-    const maxDist = WIDTH / 2;
-    const intensity = Math.min(dist / maxDist, 1); // entre 0 et 1
-
-    touchDir = { angle, intensity };
-}
-//}
-
 // --- GAME LOOP ---
 function update() {
     if (gameOver) return;
-
     moveClavier();
     // tactile orienté
     if (touchDir) {
@@ -76,7 +50,6 @@ function update() {
         player.x += Math.cos(touchDir.angle) * speed;
         player.y += Math.sin(touchDir.angle) * speed;
     }
-
     // Garder le joueur dans la vue (mais déclencher le défilement)
     if (player.x < edgeZone && cameraX > 0) {
         cameraX -= player.speed; // défilement à gauche
@@ -85,28 +58,15 @@ function update() {
         cameraX += player.speed; // défilement à droite
         if (cameraX > decorWidth - viewWidth / 2) cameraX = decorWidth - viewWidth / 2;
     }
-
-    
     screenWall();
-    
-    defileTimerOrWin();
-	
+    defileTimerOrDie();
     // Check "tâches"
-    if  (player.x < 20 && player.y < 20 && tasksDone < requiredTasks) {
-        tasksDone++;
-        player.x = 70; player.y = 100; // Retour position
-        if (tasksDone === requiredTasks) endGame(true);
-    }
-    
-
+    incTaskOrWin(); //player{}, tasksDone, requiredTasks, endGame()   
 }
-
 //**JEU***********************************
 /*     ***INPUT
        ***Le joueur est au centre
 */
-// --- PLAYER ---
-
 /*     ***écran à 1000x250
        ***affichage décor
        ****Assets
@@ -114,19 +74,9 @@ function update() {
 // --- DESSIN ---
 
 function draw() {
-    /*
-   ctx.clearRect(0, 0, vueWidth, HEIGHT);
   
-    // Ajuster la caméra pour centrer sur le joueur
-    cameraX = player.x - vueWidth / 2;
-  
-    // Empêcher la caméra de sortir des bords
-    if (cameraX < 0) cameraX = 0;
-    if (cameraX > decorWidth - vueWidth) cameraX = decorWidth - vueWidth;
-  */
     ctx.fillStyle = "#1a1a1a";
     ctx.fillRect(0, 0, WIDTH, HEIGHT);
-
 
     // Dessiner uniquement la portion visible du décor*/
     ctx.drawImage(Decor1,
@@ -134,20 +84,43 @@ function draw() {
         0, 0, viewWidth, HEIGHT        // destination (sur la "vue")
     );
     //Filtre bleu nuit
-    ctx.fillStyle = "rgba(0, 0, 80, 0.5)"; // bleu foncé avec opacité
+    ctx.fillStyle = "rgba(0, 0, 80, 0.7)"; // bleu foncé avec opacité
     ctx.fillRect(0, 0, viewWidth, HEIGHT);
 
-    // Draw Background Image
-    //Decor1.onload = () => {
-    //ctx.drawImage(Decor1, 0, 0, WIDTH, HEIGHT); // VOIR AFFDECOR
-    //ctx.drawImage(Decor1, 0, 0, 250, 250, 0, 0, 250, 250);
-    //};
-    //Filtre bleu nuit
-    ctx.fillStyle = "rgba(0, 0, 80, 0.5)"; // bleu foncé avec opacité
-    ctx.fillRect(0, 0, WIDTH, HEIGHT);
-    // Joueur
+    // LightTarget
     ctx.fillStyle = "#fff";
     ctx.fillRect(player.x, player.y, player.w, player.h);
+
+  /////////// Player
+
+
+  PlayerImg.onload = () => {  
+    // Calcul centrage et échelle
+    const scale = Math.min(WIDTH / PlayerImg.width, HEIGHT / PlayerImg.height);
+    const drawW = PlayerImg.width * scale;
+    const drawH = PlayerImg.height * scale;
+    const offsetX = (WIDTH - drawW) / 2;
+    const offsetY = (HEIGHT - drawH) / 2;
+    console.log(PlayerImg);
+
+    // 1️⃣ Affiche l’image
+    ctx.drawImage(PlayerImg, offsetX, offsetY, drawW, drawH);
+    // 2️⃣ Lit ses pixels
+    const imageData = ctx.getImageData(offsetX, offsetY, drawW, drawH);
+    const data = imageData.data;
+    // 3️⃣ Modifie chaque pixel
+    for (let i = 0; i < data.length; i += 4) {
+      const r = data[i];
+      if (r > 200) {
+        data[i + 3] = 0; // transparent
+      } else {
+        data[i] = 0; data[i + 1] = 0; data[i + 2] = 0;
+        data[i + 3] = 255 * 0.25; // noir à 25%
+      }
+    }
+    // 4️⃣ Réécrit les pixels modifiés
+    ctx.putImageData(imageData, offsetX, offsetY);
+  };
 
     // Timer
     ctx.font = "20px Georgia";
@@ -160,7 +133,6 @@ function draw() {
 /*    ***DEPLACEMENTJOUEUR
 //    ***affichage 250x250 */
 // Variables pour le défilement
-//let playerX = 0;        // position du joueur
 let cameraX = 0;        // décalage horizontal de la "vue"
 const viewWidth = 500;   // largeur de la fenêtre visible
 const decorWidth = 1000; // largeur totale du décor
@@ -223,6 +195,26 @@ function GestionClavier() {  // const keys = { left: false, right: false, up: fa
     });
 }
 
+function handleTouch(e) {
+    const touch = e.touches[0];
+    const rect = canvas.getBoundingClientRect();
+    const x = touch.clientX - rect.left;
+    const y = touch.clientY - rect.top;
+
+    // coordonnées relatives au centre
+    const dx = x - WIDTH / 2;
+    const dy = y - HEIGHT / 2;
+
+    const dist = Math.hypot(dx, dy);
+    const angle = Math.atan2(dy, dx);
+
+    // on limite la distance max (500/2 = rayon max)
+    const maxDist = WIDTH / 2;
+    const intensity = Math.min(dist / maxDist, 1); // entre 0 et 1
+
+    touchDir = { angle, intensity };
+}
+
  function moveClavier () {
   //const player = { x: WIDTH / 2, y: HEIGHT / 2, w: 16, h: 16, speed: 3.1 };
     if (keys.left) player.x -= player.speed;
@@ -236,7 +228,15 @@ function GestionClavier() {  // const keys = { left: false, right: false, up: fa
 		player.y = Math.max(0, Math.min(HEIGHT - player.h, player.y));
     }
 
-    function defileTimerOrWin() { //timeLeft, endGame()
+    function defileTimerOrDie() { //timeLeft, endGame()
 		timeLeft -= 1 / 60;
 		if (timeLeft <= 0) endGame(false);
+	}
+
+function incTaskOrWin() {
+      if  (player.x < 20 && player.y < 20 && tasksDone < requiredTasks) {
+        tasksDone++;
+        player.x = 70; player.y = 100; // Retour position
+        if (tasksDone === requiredTasks) endGame(true);
+      }
 	}
