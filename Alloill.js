@@ -8,7 +8,7 @@ Decor1.src = 'Asset1-1.bmp'; // Chemin vers BMP ou PNG
 // image silhouette joueur
 const PlayerImg = new Image();
 PlayerImg.crossOrigin = "anonymous"; // avant .src
-PlayerImg.src = "Hum1NB.png";
+PlayerImg.src = "essai.bmp";
 // --- GAME STATE ---
 let timeLeft = 60;
 let gameOver = false;
