@@ -18,6 +18,8 @@ let requiredTasks = 3;
 const keys = { left: false, right: false, up: false, down: false };
 // --- PLAYER ---
 const player = { x: WIDTH / 2, y: HEIGHT / 2, w: 16, h: 16, speed: 3.1 };
+//Options
+const pourcBord = 10;   // pourcentage de bordure
 
 
 /*Algo - A PLACER
@@ -91,7 +93,7 @@ function draw() {
   ctx.fillStyle = "#fff";
   ctx.fillRect(player.x, player.y, player.w, player.h);
 
-  newPage();
+  //newPage();
 
   /////////// Player
 
@@ -136,7 +138,7 @@ function draw() {
 //    ***affichage 250x250 */
 // Variables pour le défilement
 let cameraX = 0;        // décalage horizontal de la "vue"
-const viewWidth = 500;   // largeur de la fenêtre visible
+const viewWidth = WIDTH;   // largeur de la fenêtre visible
 const decorWidth = 1000; // largeur totale du décor
 //Adaptation mobile
 //const ratio = 1000 / 250; //  décor d’origine
@@ -157,7 +159,16 @@ const edgeZone = 30;          // distance au bord où le scrolling commence
  ***INTERACTIIONS
  ****OBJETS DE DECOR
  ****TÂCHES
-
+ ***MENU PAUSE*/
+let paused = false;
+window.addEventListener("keydown", e => {
+  if (e.key === "Escape" || e.key === "F1" || e.key.toLowerCase() === "p" || e.key === "h" || e.key === "H") {
+    e.preventDefault(); // empêche F1 d’ouvrir l’aide navigateur
+    paused = !paused;
+    if (!paused) loop(); // reprise
+  }
+});
+/*
  **OPTIONS*/
 
 
@@ -170,18 +181,30 @@ const edgeZone = 30;          // distance au bord où le scrolling commence
 function endGame(success) {
   gameOver = true;
   setTimeout(() => {
-    alert(success ? "Tu as survécu !" : "Le monstre t’a attrapé !");
+    alert(success ? "Tu as survécu!" : "Le monstre t’a attrapé!");
     document.location.reload();
   }, 500);
 }
 
 // --- LOOP ---
-function loop() {
+/*function loop() {
   update();
+  if (paused) return; // on sort de la boucle sans refaire de frame
   draw();
   requestAnimationFrame(loop);
 }
-
+loop();
+*/
+function loop() {
+  if (!paused) {
+    update();
+    draw();
+    requestAnimationFrame(loop);
+  } else {
+    drawPauseOverlay();
+    affOptions();
+  }
+}
 loop();
 
 function GestionClavier() {  // const keys = { left: false, right: false, up: false, down: false, param: false };
@@ -190,7 +213,7 @@ function GestionClavier() {  // const keys = { left: false, right: false, up: fa
     if (e.key === "ArrowRight") keys.right = true;
     if (e.key === "ArrowUp") keys.up = true;
     if (e.key === "ArrowDown") keys.down = true;
-    if (e.key === "h") keys.param = true;
+    //  if (e.key === "h") keys.param = true;
 
   });
   window.addEventListener("keyup", e => {
@@ -247,7 +270,39 @@ function incTaskOrWin() {
   }
 }
 
-function newPage() {
+/*function newPage() {
   ctx.fillStyle = "#6d6d6d7b";
-  ctx.fillRect(50, 50, 400, 400);
+  ctx.fillRect(WIDTH * 10 / 100, 10, 400, 400);
+}*/
+
+function drawPauseOverlay() {
+  ctx.fillStyle = "#6d6d6d7b";
+  ctx.fillRect(WIDTH * pourcBord / 100, HEIGHT * pourcBord / 100, WIDTH - (WIDTH * 2 * pourcBord / 100), HEIGHT - (HEIGHT * 2 * pourcBord / 100));
+  ctx.fillStyle = "#015e0fff";
+  ctx.font = "65px Georgia";
+  ctx.fillText("⏸ Pause ", 120, (HEIGHT / 2) - 100);
+  ctx.fillStyle = "#ff8400ff";
+  ctx.font = "60px Georgia";
+  ctx.fillText("⏸ Pause ", 130, (HEIGHT / 2) - 95);
+}
+
+function writeLine(numLigne, text) {
+  //const totalLignes = 10; // nombre total de lignes
+  const marginTop = 20;     // marge avant la 1re ligne
+  const lineHeight = 40;    // espacement vertical entre lignes
+  const hautLigne = 200; // haut du contenneur de texte
+
+  ctx.font = "20px Arial"; ctx.fillStyle = "white"; ctx.textAlign = "left"; ctx.textBaseline = "top";
+  /*/ Sécurité : éviter les lignes hors limite ; if (numLigne < 1) numLigne = 1; if (numLigne > totalLignes) numLigne = totalLignes;*/
+  // Calcul de la position verticale
+  const y = marginTop + (numLigne - 1) * lineHeight;
+
+  ctx.fillText(text, 2 * WIDTH * pourcBord / 100, y + hautLigne);
+}
+
+function affOptions() {
+  writeLine(1, "Avancez ou reculez :");
+  writeLine(2, "Flèches directionnelles");
+  writeLine(3, "Echap/P/F1/H : ");
+  writeLine(4, "Reprendre le jeu");
 }
