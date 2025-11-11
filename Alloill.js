@@ -30,7 +30,7 @@ const player = { x: WIDTH / 2, y: HEIGHT / 2, w: 16, h: 16, speed: 3.1 };
         *-ECRAN DE DEMARRAGE (LOGO MATTMARKETDIGITALS)*/
 alert("Push on keyboard for start");
 //        **fondu
-        //*-MENU *******************************
+//*-MENU *******************************
 // --- INPUT ---
 GestionClavier();
 //////function GestionTactile() {
@@ -42,26 +42,26 @@ canvas.addEventListener("touchmove", handleTouch);
 canvas.addEventListener("touchend", () => touchDir = null);
 // --- GAME LOOP ---
 function update() {
-    if (gameOver) return;
-    moveClavier();
-    // tactile orienté
-    if (touchDir) {
-        const speed = maxSpeed * touchDir.intensity;
-        player.x += Math.cos(touchDir.angle) * speed;
-        player.y += Math.sin(touchDir.angle) * speed;
-    }
-    // Garder le joueur dans la vue (mais déclencher le défilement)
-    if (player.x < edgeZone && cameraX > 0) {
-        cameraX -= player.speed; // défilement à gauche
-        if (cameraX < 0) cameraX = 0;
-    } else if (player.x > viewWidth - edgeZone && cameraX < decorWidth - viewWidth / 2) {
-        cameraX += player.speed; // défilement à droite
-        if (cameraX > decorWidth - viewWidth / 2) cameraX = decorWidth - viewWidth / 2;
-    }
-    screenWall();
-    defileTimerOrDie();
-    // Check "tâches"
-    incTaskOrWin(); //player{}, tasksDone, requiredTasks, endGame()   
+  if (gameOver) return;
+  moveClavier();
+  // tactile orienté
+  if (touchDir) {
+    const speed = maxSpeed * touchDir.intensity;
+    player.x += Math.cos(touchDir.angle) * speed;
+    player.y += Math.sin(touchDir.angle) * speed;
+  }
+  // Garder le joueur dans la vue (mais déclencher le défilement)
+  if (player.x < edgeZone && cameraX > 0) {
+    cameraX -= player.speed; // défilement à gauche
+    if (cameraX < 0) cameraX = 0;
+  } else if (player.x > viewWidth - edgeZone && cameraX < decorWidth - viewWidth / 2) {
+    cameraX += player.speed; // défilement à droite
+    if (cameraX > decorWidth - viewWidth / 2) cameraX = decorWidth - viewWidth / 2;
+  }
+  screenWall();
+  defileTimerOrDie();
+  // Check "tâches"
+  incTaskOrWin(); //player{}, tasksDone, requiredTasks, endGame()   
 }
 //**JEU***********************************
 /*     ***INPUT
@@ -74,27 +74,29 @@ function update() {
 // --- DESSIN ---
 
 function draw() {
-  
-    ctx.fillStyle = "#1a1a1a";
-    ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
-    // Dessiner uniquement la portion visible du décor*/
-    ctx.drawImage(Decor1,
-        cameraX, 0, viewWidth / 2, HEIGHT / 2, // source (partie du décor)
-        0, 0, viewWidth, HEIGHT        // destination (sur la "vue")
-    );
-    //Filtre bleu nuit
-    ctx.fillStyle = "rgba(0, 0, 80, 0.7)"; // bleu foncé avec opacité
-    ctx.fillRect(0, 0, viewWidth, HEIGHT);
+  ctx.fillStyle = "#1a1a1a";
+  ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
-    // LightTarget
-    ctx.fillStyle = "#fff";
-    ctx.fillRect(player.x, player.y, player.w, player.h);
+  // Dessiner uniquement la portion visible du décor*/
+  ctx.drawImage(Decor1,
+    cameraX, 0, viewWidth / 2, HEIGHT / 2, // source (partie du décor)
+    0, 0, viewWidth, HEIGHT        // destination (sur la "vue")
+  );
+  //Filtre bleu nuit
+  ctx.fillStyle = "rgba(0, 0, 80, 0.7)"; // bleu foncé avec opacité
+  ctx.fillRect(0, 0, viewWidth, HEIGHT);
+
+  // LightTarget
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(player.x, player.y, player.w, player.h);
+
+  newPage();
 
   /////////// Player
 
 
-  PlayerImg.onload = () => {  
+  PlayerImg.onload = () => {
     // Calcul centrage et échelle
     const scale = Math.min(WIDTH / PlayerImg.width, HEIGHT / PlayerImg.height);
     const drawW = PlayerImg.width * scale;
@@ -122,11 +124,11 @@ function draw() {
     ctx.putImageData(imageData, offsetX, offsetY);
   };
 
-    // Timer
-    ctx.font = "20px Georgia";
-    ctx.fillStyle = "#f33";
-    ctx.fillText(`Temps: ${Math.ceil(timeLeft)}`, 5, 20);//augmenté taille texte
-    ctx.fillText(`Tâches: ${tasksDone}/${requiredTasks}`, 5, 40);
+  // Timer
+  ctx.font = "20px Georgia";
+  ctx.fillStyle = "#f33";
+  ctx.fillText(`Temps: ${Math.ceil(timeLeft)}`, 5, 20);//augmenté taille texte
+  ctx.fillText(`Tâches: ${tasksDone}/${requiredTasks}`, 5, 40);
 
 }
 
@@ -140,8 +142,8 @@ const decorWidth = 1000; // largeur totale du décor
 //const ratio = 1000 / 250; //  décor d’origine
 // Si la largeur dépasse l’écran, on réduit
 if (viewWidth > window.innerWidth) {
-    viewWidth = window.innerWidth;
-    //HEIGHT = WIDTH * ratio;
+  viewWidth = window.innerWidth;
+  //HEIGHT = WIDTH * ratio;
 }
 const edgeZone = 30;          // distance au bord où le scrolling commence
 
@@ -156,87 +158,96 @@ const edgeZone = 30;          // distance au bord où le scrolling commence
  ****OBJETS DE DECOR
  ****TÂCHES
 
- **OPTIONS
- **EXIT 
+ **OPTIONS*/
+
+
+/* **EXIT 
  ***CREDITS
 .        ///////////////////////////////////////
  */
 
 // --- FIN DE PARTIE ---
 function endGame(success) {
-    gameOver = true;
-    setTimeout(() => {
-        alert(success ? "Tu as survécu !" : "Le monstre t’a attrapé !");
-        document.location.reload();
-    }, 500);
+  gameOver = true;
+  setTimeout(() => {
+    alert(success ? "Tu as survécu !" : "Le monstre t’a attrapé !");
+    document.location.reload();
+  }, 500);
 }
 
 // --- LOOP ---
 function loop() {
-    update();
-    draw();
-    requestAnimationFrame(loop);
+  update();
+  draw();
+  requestAnimationFrame(loop);
 }
 
 loop();
 
-function GestionClavier() {  // const keys = { left: false, right: false, up: false, down: false };
-    window.addEventListener("keydown", e => {
-        if (e.key === "ArrowLeft") keys.left = true;
-        if (e.key === "ArrowRight") keys.right = true;
-        if (e.key === "ArrowUp") keys.up = true;
-        if (e.key === "ArrowDown") keys.down = true;
-    });
-    window.addEventListener("keyup", e => {
-        if (e.key === "ArrowLeft") keys.left = false;
-        if (e.key === "ArrowRight") keys.right = false;
-        if (e.key === "ArrowUp") keys.up = false;
-        if (e.key === "ArrowDown") keys.down = false;
-    });
+function GestionClavier() {  // const keys = { left: false, right: false, up: false, down: false, param: false };
+  window.addEventListener("keydown", e => {
+    if (e.key === "ArrowLeft") keys.left = true;
+    if (e.key === "ArrowRight") keys.right = true;
+    if (e.key === "ArrowUp") keys.up = true;
+    if (e.key === "ArrowDown") keys.down = true;
+    if (e.key === "h") keys.param = true;
+
+  });
+  window.addEventListener("keyup", e => {
+    if (e.key === "ArrowLeft") keys.left = false;
+    if (e.key === "ArrowRight") keys.right = false;
+    if (e.key === "ArrowUp") keys.up = false;
+    if (e.key === "ArrowDown") keys.down = false;
+  });
 }
 
 function handleTouch(e) {
-    const touch = e.touches[0];
-    const rect = canvas.getBoundingClientRect();
-    const x = touch.clientX - rect.left;
-    const y = touch.clientY - rect.top;
+  const touch = e.touches[0];
+  const rect = canvas.getBoundingClientRect();
+  const x = touch.clientX - rect.left;
+  const y = touch.clientY - rect.top;
 
-    // coordonnées relatives au centre
-    const dx = x - WIDTH / 2;
-    const dy = y - HEIGHT / 2;
+  // coordonnées relatives au centre
+  const dx = x - WIDTH / 2;
+  const dy = y - HEIGHT / 2;
 
-    const dist = Math.hypot(dx, dy);
-    const angle = Math.atan2(dy, dx);
+  const dist = Math.hypot(dx, dy);
+  const angle = Math.atan2(dy, dx);
 
-    // on limite la distance max (500/2 = rayon max)
-    const maxDist = WIDTH / 2;
-    const intensity = Math.min(dist / maxDist, 1); // entre 0 et 1
+  // on limite la distance max (500/2 = rayon max)
+  const maxDist = WIDTH / 2;
+  const intensity = Math.min(dist / maxDist, 1); // entre 0 et 1
 
-    touchDir = { angle, intensity };
+  touchDir = { angle, intensity };
 }
 
- function moveClavier () {
+function moveClavier() {
   //const player = { x: WIDTH / 2, y: HEIGHT / 2, w: 16, h: 16, speed: 3.1 };
-    if (keys.left) player.x -= player.speed;
-    if (keys.right) player.x += player.speed;
-    if (keys.up) player.y -= player.speed;
-    if (keys.down) player.y += player.speed;
-  }
-   
- function screenWall(){ //player{},viewWidth,HEIGHT
-		player.x = Math.max(0, Math.min(viewWidth - player.w, player.x));
-		player.y = Math.max(0, Math.min(HEIGHT - player.h, player.y));
-    }
+  if (keys.left) player.x -= player.speed;
+  if (keys.right) player.x += player.speed;
+  if (keys.up) player.y -= player.speed;
+  if (keys.down) player.y += player.speed;
+}
 
-    function defileTimerOrDie() { //timeLeft, endGame()
-		timeLeft -= 1 / 60;
-		if (timeLeft <= 0) endGame(false);
-	}
+function screenWall() { //player{},viewWidth,HEIGHT
+  player.x = Math.max(0, Math.min(viewWidth - player.w, player.x));
+  player.y = Math.max(0, Math.min(HEIGHT - player.h, player.y));
+}
+
+function defileTimerOrDie() { //timeLeft, endGame()
+  timeLeft -= 1 / 60;
+  if (timeLeft <= 0) endGame(false);
+}
 
 function incTaskOrWin() {
-      if  (player.x < 20 && player.y < 20 && tasksDone < requiredTasks) {
-        tasksDone++;
-        player.x = 70; player.y = 100; // Retour position
-        if (tasksDone === requiredTasks) endGame(true);
-      }
-	}
+  if (player.x < 20 && player.y < 20 && tasksDone < requiredTasks) {
+    tasksDone++;
+    player.x = 70; player.y = 100; // Retour position
+    if (tasksDone === requiredTasks) endGame(true);
+  }
+}
+
+function newPage() {
+  ctx.fillStyle = "#6d6d6d7b";
+  ctx.fillRect(50, 50, 400, 400);
+}
