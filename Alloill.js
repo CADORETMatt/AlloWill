@@ -7,8 +7,8 @@ const Decor1 = new Image();      //VOIR DANS FUNCTION DRAW
 Decor1.src = 'Asset1-1.bmp'; // Chemin vers BMP ou PNG
 // image silhouette joueur
 const PlayerImg = new Image();
-PlayerImg.crossOrigin = "anonymous"; // avant .src
-PlayerImg.src = "essai.bmp";
+// PlayerImg.crossOrigin = "anonymous"; // avant .src
+PlayerImg.src = "./Hum1NB.png";
 // --- GAME STATE ---
 let timeLeft = 60;
 let gameOver = false;
@@ -80,11 +80,53 @@ function draw() {
   ctx.fillStyle = "#1a1a1a";
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
+  PlayerImg.onload = () => {
+    // Calcul centrage et échelle
+    const scale = 1;//Math.min(WIDTH / PlayerImg.width, HEIGHT / PlayerImg.height);
+    const drawW = PlayerImg.width * scale;
+    const drawH = PlayerImg.height * scale;
+    const offsetX = (WIDTH - drawW) / 2;
+    const offsetY = (HEIGHT - drawH) / 2;
+    console.log("WIDTH HEIGHT de PlayerImg", PlayerImg.width, PlayerImg.height);
+    console.log(PlayerImg, offsetX, offsetY, drawW, drawH);
+
+    // 1️⃣ Affiche l’image
+    ctx.drawImage(Decor1,
+      0, 0, WIDTH / 2, HEIGHT / 2, // source (partie du décor)
+      0, 0, WIDTH, HEIGHT        // destination (sur la "vue")
+    );
+    // Dessiner uniquement la portion visible du décor*/
+    ctx.globalCompositeOperation = "source-over"; // par défaut 
+    ctx.globalAlpha = 0.25;
+    ctx.drawImage(PlayerImg, offsetX, offsetY + 50, drawW, drawH);
+    ctx.globalAlpha = 1;
+
+    console.log("dans draw");
+    // 1️⃣ Affiche l’image
+    //ctx.drawImage(PlayerImg, offsetX, offsetY, drawW, drawH);
+    /* // 2️⃣ Lit ses pixels
+     const imageData = ctx.getImageData(offsetX, offsetY, drawW, drawH);
+     const data = imageData.data;
+     // 3️⃣ Modifie chaque pixel
+     for (let i = 0; i <
+       data.length; i += 4) {
+       console.log("data[i] r=", data[i]);
+       const r = data[i];
+       if (r > 200) {
+         data[i + 3] = 0; // transparent
+       } else {
+         data[i] = 0; data[i + 1] = 0; data[i + 2] = 0;
+         data[i + 3] = 64; // noir à 25%
+       }
+     }
+     // 4️⃣ Réécrit les pixels modifiés
+     ctx.putImageData(imageData, offsetX, offsetY);*/
+  };
   // Dessiner uniquement la portion visible du décor*/
-  ctx.drawImage(Decor1,
+  /*ctx.drawImage(Decor1,
     cameraX, 0, viewWidth / 2, HEIGHT / 2, // source (partie du décor)
     0, 0, viewWidth, HEIGHT        // destination (sur la "vue")
-  );
+  );*/
   //Filtre bleu nuit
   ctx.fillStyle = "rgba(0, 0, 80, 0.7)"; // bleu foncé avec opacité
   ctx.fillRect(0, 0, viewWidth, HEIGHT);
@@ -98,33 +140,6 @@ function draw() {
   /////////// Player
 
 
-  PlayerImg.onload = () => {
-    // Calcul centrage et échelle
-    const scale = Math.min(WIDTH / PlayerImg.width, HEIGHT / PlayerImg.height);
-    const drawW = PlayerImg.width * scale;
-    const drawH = PlayerImg.height * scale;
-    const offsetX = (WIDTH - drawW) / 2;
-    const offsetY = (HEIGHT - drawH) / 2;
-    console.log(PlayerImg);
-
-    // 1️⃣ Affiche l’image
-    ctx.drawImage(PlayerImg, offsetX, offsetY, drawW, drawH);
-    // 2️⃣ Lit ses pixels
-    const imageData = ctx.getImageData(offsetX, offsetY, drawW, drawH);
-    const data = imageData.data;
-    // 3️⃣ Modifie chaque pixel
-    for (let i = 0; i < data.length; i += 4) {
-      const r = data[i];
-      if (r > 200) {
-        data[i + 3] = 0; // transparent
-      } else {
-        data[i] = 0; data[i + 1] = 0; data[i + 2] = 0;
-        data[i + 3] = 255 * 0.25; // noir à 25%
-      }
-    }
-    // 4️⃣ Réécrit les pixels modifiés
-    ctx.putImageData(imageData, offsetX, offsetY);
-  };
 
   // Timer
   ctx.font = "20px Georgia";
