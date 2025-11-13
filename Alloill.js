@@ -1,3 +1,4 @@
+
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 const WIDTH = canvas.width;
@@ -17,9 +18,14 @@ let requiredTasks = 3;
 // Gestion du clavier
 const keys = { left: false, right: false, up: false, down: false };
 // --- PLAYER ---
-const player = { x: WIDTH / 2, y: HEIGHT / 2, w: 16, h: 16, speed: 3.1 };
+const player = { x: WIDTH / 2, y: HEIGHT / 2, w: 16, h: 16, speed: 1.1 };
 //Options
 const pourcBord = 10;   // pourcentage de bordure
+// Variables pour le défilement
+let cameraX = 0;        // décalage horizontal de la "vue"
+const viewWidth = WIDTH;   // largeur de la fenêtre visible
+const decorWidth = 1000; // largeur totale du décor
+const edgeZone = 30;          // distance au bord où le scrolling commence
 
 
 /*Algo - A PLACER
@@ -80,48 +86,52 @@ function draw() {
   ctx.fillStyle = "#1a1a1a";
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
-  PlayerImg.onload = () => {
-    // Calcul centrage et échelle
-    const scale = 1;//Math.min(WIDTH / PlayerImg.width, HEIGHT / PlayerImg.height);
-    const drawW = PlayerImg.width * scale;
-    const drawH = PlayerImg.height * scale;
-    const offsetX = (WIDTH - drawW) / 2;
-    const offsetY = (HEIGHT - drawH) / 2;
-    console.log("WIDTH HEIGHT de PlayerImg", PlayerImg.width, PlayerImg.height);
-    console.log(PlayerImg, offsetX, offsetY, drawW, drawH);
+  //  PlayerImg.onload = () => {
+  // Calcul centrage et échelle
+  const scale = 1;//Math.min(WIDTH / PlayerImg.width, HEIGHT / PlayerImg.height);
+  const drawW = PlayerImg.width * scale;
+  const drawH = PlayerImg.height * scale;
+  const offsetX = (WIDTH - drawW) / 2;
+  const offsetY = (HEIGHT - drawH) / 2;
+  console.log("WIDTH HEIGHT de PlayerImg", PlayerImg.width, PlayerImg.height);
+  console.log(PlayerImg, offsetX, offsetY, drawW, drawH);
 
-    // 1️⃣ Affiche l’image
-    ctx.drawImage(Decor1,
-      0, 0, WIDTH / 2, HEIGHT / 2, // source (partie du décor)
-      0, 0, WIDTH, HEIGHT        // destination (sur la "vue")
-    );
-    // Dessiner uniquement la portion visible du décor*/
-    ctx.globalCompositeOperation = "source-over"; // par défaut 
-    ctx.globalAlpha = 0.25;
-    ctx.drawImage(PlayerImg, offsetX, offsetY + 50, drawW, drawH);
-    ctx.globalAlpha = 1;
+  // 1️⃣ Affiche l’image
+  ctx.drawImage(
+    Decor1,
+    cameraX, 0,          // zone du décor à afficher
+    viewWidth, HEIGHT,   // portion du décor
+    0, 0, WIDTH * 2, HEIGHT * 2  // position sur le canvas
+  );
+  // Dessiner uniquement la portion visible du décor*/
+  ctx.globalCompositeOperation = "source-over"; // par défaut 
+  ctx.globalAlpha = 0.25;
+  ctx.drawImage(PlayerImg, offsetX, offsetY + 50, drawW, drawH);
+  ctx.globalAlpha = 1;
 
-    console.log("dans draw");
-    // 1️⃣ Affiche l’image
-    //ctx.drawImage(PlayerImg, offsetX, offsetY, drawW, drawH);
-    /* // 2️⃣ Lit ses pixels
-     const imageData = ctx.getImageData(offsetX, offsetY, drawW, drawH);
-     const data = imageData.data;
-     // 3️⃣ Modifie chaque pixel
-     for (let i = 0; i <
-       data.length; i += 4) {
-       console.log("data[i] r=", data[i]);
-       const r = data[i];
-       if (r > 200) {
-         data[i + 3] = 0; // transparent
-       } else {
-         data[i] = 0; data[i + 1] = 0; data[i + 2] = 0;
-         data[i + 3] = 64; // noir à 25%
-       }
+  console.log("dans draw");
+
+  // 1️⃣ Affiche l’image
+  //ctx.drawImage(PlayerImg, offsetX, offsetY, drawW, drawH);
+  /* // 2️⃣ Lit ses pixels
+   const imageData = ctx.getImageData(offsetX, offsetY, drawW, drawH);
+   const data = imageData.data;
+   // 3️⃣ Modifie chaque pixel
+   for (let i = 0; i <
+     data.length; i += 4) {
+     console.log("data[i] r=", data[i]);
+     const r = data[i];
+     if (r > 200) {
+       data[i + 3] = 0; // transparent
+     } else {
+
+      data[i] = 0; data[i + 1] = 0; data[i + 2] = 0;
+       data[i + 3] = 64; // noir à 25%
      }
-     // 4️⃣ Réécrit les pixels modifiés
-     ctx.putImageData(imageData, offsetX, offsetY);*/
-  };
+   }
+   // 4️⃣ Réécrit les pixels modifiés
+   ctx.putImageData(imageData, offsetX, offsetY);*/
+
   // Dessiner uniquement la portion visible du décor*/
   /*ctx.drawImage(Decor1,
     cameraX, 0, viewWidth / 2, HEIGHT / 2, // source (partie du décor)
@@ -147,22 +157,28 @@ function draw() {
   ctx.fillText(`Temps: ${Math.ceil(timeLeft)}`, 5, 20);//augmenté taille texte
   ctx.fillText(`Tâches: ${tasksDone}/${requiredTasks}`, 5, 40);
 
-}
+  const radius = 120;
+  ctx.save();
+  ctx.fillStyle = "rgba(0, 0, 0, 0.55)";
+  ctx.fillRect(0, 0, WIDTH, HEIGHT);
+  ctx.globalCompositeOperation = "destination-out";
+  ctx.beginPath();
+  ctx.arc(player.x + player.w / 2, player.y + player.h / 2, radius, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
 
-/*    ***DEPLACEMENTJOUEUR
-//    ***affichage 250x250 */
-// Variables pour le défilement
-let cameraX = 0;        // décalage horizontal de la "vue"
-const viewWidth = WIDTH;   // largeur de la fenêtre visible
-const decorWidth = 1000; // largeur totale du décor
-//Adaptation mobile
-//const ratio = 1000 / 250; //  décor d’origine
-// Si la largeur dépasse l’écran, on réduit
-if (viewWidth > window.innerWidth) {
-  viewWidth = window.innerWidth;
-  //HEIGHT = WIDTH * ratio;
+
+  /*    ***DEPLACEMENTJOUEUR
+  //    ***affichage 250x250 */
+  // Variables pour le défilement
+  //Adaptation mobile
+  //const ratio = 1000 / 250; //  décor d’origine
+  // Si la largeur dépasse l’écran, on réduit
+  if (viewWidth > window.innerWidth) {
+    viewWidth = window.innerWidth;
+    //HEIGHT = WIDTH * ratio;
+  }
 }
-const edgeZone = 30;          // distance au bord où le scrolling commence
 
 
 
