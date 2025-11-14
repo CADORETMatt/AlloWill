@@ -1,4 +1,3 @@
-
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 const WIDTH = canvas.width;
@@ -17,8 +16,9 @@ let tasksDone = 0;
 let requiredTasks = 3;
 // Gestion du clavier
 const keys = { left: false, right: false, up: false, down: false };
-// --- PLAYER ---
-const player = { x: WIDTH / 2, y: HEIGHT / 2, w: 16, h: 16, speed: 1.1 };
+// --- CURSOR ---
+const cursor = { x: WIDTH / 2, y: HEIGHT / 2, w: 16, h: 16, speed: 1.1 };
+let vitesseLampe = 6; // multiplicateur de vitesse lampe de poche
 //Options
 const pourcBord = 10;   // pourcentage de bordure
 // Variables pour le défilement
@@ -55,21 +55,23 @@ function update() {
   // tactile orienté
   if (touchDir) {
     const speed = maxSpeed * touchDir.intensity;
-    player.x += Math.cos(touchDir.angle) * speed;
-    player.y += Math.sin(touchDir.angle) * speed;
+    cursor.x += Math.cos(touchDir.angle) * speed;
+    cursor.y += Math.sin(touchDir.angle) * speed;
   }
   // Garder le joueur dans la vue (mais déclencher le défilement)
-  if (player.x < edgeZone && cameraX > 0) {
-    cameraX -= player.speed; // défilement à gauche
-    if (cameraX < 0) cameraX = 0;
-  } else if (player.x > viewWidth - edgeZone && cameraX < decorWidth - viewWidth / 2) {
-    cameraX += player.speed; // défilement à droite
+  if (cursor.x < edgeZone && keys.left === false && keys.right === false) cursor.x += cursor.speed; // cursor reste sur place
+  if (cursor.x > viewWidth - edgeZone && keys.left === false && keys.right === false) cursor.x -= cursor.speed; // cursor reste sur place
+  if (cursor.x < edgeZone && cameraX > 0) {
+    cameraX -= cursor.speed; // défilement à gauche
+    // if (cameraX < 0) cameraX = 0;
+  } else if (cursor.x > viewWidth - edgeZone && cameraX < decorWidth - viewWidth / 2) {
+    cameraX += cursor.speed; // défilement à droite
     if (cameraX > decorWidth - viewWidth / 2) cameraX = decorWidth - viewWidth / 2;
   }
   screenWall();
   defileTimerOrDie();
   // Check "tâches"
-  incTaskOrWin(); //player{}, tasksDone, requiredTasks, endGame()   
+  incTaskOrWin(); //cursor{}, tasksDone, requiredTasks, endGame()   
 }
 //**JEU***********************************
 /*     ***INPUT
@@ -143,29 +145,28 @@ function draw() {
 
   // LightTarget
   ctx.fillStyle = "#fff";
-  ctx.fillRect(player.x, player.y, player.w, player.h);
+  ctx.fillRect(cursor.x, cursor.y, cursor.w, cursor.h);
 
   //newPage();
 
   /////////// Player
 
-
-
-  // Timer
-  ctx.font = "20px Georgia";
-  ctx.fillStyle = "#f33";
-  ctx.fillText(`Temps: ${Math.ceil(timeLeft)}`, 5, 20);//augmenté taille texte
-  ctx.fillText(`Tâches: ${tasksDone}/${requiredTasks}`, 5, 40);
-
+  //Dessin effet lampe de poche
   const radius = 120;
   ctx.save();
   ctx.fillStyle = "rgba(0, 0, 0, 0.55)";
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
   ctx.globalCompositeOperation = "destination-out";
   ctx.beginPath();
-  ctx.arc(player.x + player.w / 2, player.y + player.h / 2, radius, 0, Math.PI * 2);
+  ctx.arc(cursor.x + cursor.w / 2, cursor.y + cursor.h / 2, radius, 0, Math.PI * 2);
   ctx.fill();
   ctx.restore();
+
+  // Timer
+  ctx.font = "20px Georgia";
+  ctx.fillStyle = "#f33";
+  ctx.fillText(`Temps: ${Math.ceil(timeLeft)}`, 5, 20);//augmenté taille texte
+  ctx.fillText(`Tâches: ${tasksDone}/${requiredTasks}`, 5, 40);
 
 
   /*    ***DEPLACEMENTJOUEUR
@@ -200,8 +201,9 @@ window.addEventListener("keydown", e => {
   }
 });
 /*
- **OPTIONS*/
-
+ **OPTIONS
+***Vitesse Lampe de poche
+***Vitesse Déplacement*/
 
 /* **EXIT 
  ***CREDITS
@@ -276,16 +278,16 @@ function handleTouch(e) {
 }
 
 function moveClavier() {
-  //const player = { x: WIDTH / 2, y: HEIGHT / 2, w: 16, h: 16, speed: 3.1 };
-  if (keys.left) player.x -= player.speed;
-  if (keys.right) player.x += player.speed;
-  if (keys.up) player.y -= player.speed;
-  if (keys.down) player.y += player.speed;
+  //const cursor = { x: WIDTH / 2, y: HEIGHT / 2, w: 16, h: 16, speed: 3.1 };
+  if (keys.left) cursor.x -= vitesseLampe * cursor.speed;
+  if (keys.right) cursor.x += vitesseLampe * cursor.speed;
+  if (keys.up) cursor.y -= vitesseLampe * cursor.speed;
+  if (keys.down) cursor.y += vitesseLampe * cursor.speed;
 }
 
-function screenWall() { //player{},viewWidth,HEIGHT
-  player.x = Math.max(0, Math.min(viewWidth - player.w, player.x));
-  player.y = Math.max(0, Math.min(HEIGHT - player.h, player.y));
+function screenWall() { //cursor{},viewWidth,HEIGHT
+  cursor.x = Math.max(0, Math.min(viewWidth - cursor.w, cursor.x));
+  cursor.y = Math.max(0, Math.min(HEIGHT - cursor.h, cursor.y));
 }
 
 function defileTimerOrDie() { //timeLeft, endGame()
@@ -294,9 +296,9 @@ function defileTimerOrDie() { //timeLeft, endGame()
 }
 
 function incTaskOrWin() {
-  if (player.x < 20 && player.y < 20 && tasksDone < requiredTasks) {
+  if (cursor.x < 20 && cursor.y < 20 && tasksDone < requiredTasks) {
     tasksDone++;
-    player.x = 70; player.y = 100; // Retour position
+    cursor.x = 70; cursor.y = 100; // Retour position
     if (tasksDone === requiredTasks) endGame(true);
   }
 }
@@ -336,4 +338,13 @@ function affOptions() {
   writeLine(2, "Flèches directionnelles");
   writeLine(3, "Echap/P/F1/H : ");
   writeLine(4, "Reprendre le jeu");
+}
+
+function creatButton(text, x, y, w, h, onClick) {
+  ctx.fillStyle = "#333";
+  ctx.fillRect(x, y, w, h);
+  ctx.fillStyle = "#fff";
+  ctx.font = "20px Arial";
+  ctx.fillText(text, x + 10, y + 10);
+  canvas.addEventListener("click", function handler(event) { })
 }
