@@ -2,13 +2,7 @@ const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 const WIDTH = canvas.width;
 const HEIGHT = canvas.height;
-//Chargement image décor
-const Decor1 = new Image();      //VOIR DANS FUNCTION DRAW
-Decor1.src = 'Asset1-1.bmp'; // Chemin vers BMP ou PNG
-// image silhouette joueur
-const PlayerImg = new Image();
-// PlayerImg.crossOrigin = "anonymous"; // avant .src
-PlayerImg.src = "./Hum1NB.png";
+
 // --- GAME STATE ---
 let timeLeft = 60;
 let gameOver = false;
@@ -26,8 +20,34 @@ let cameraX = 0;        // décalage horizontal de la "vue"
 const viewWidth = WIDTH;   // largeur de la fenêtre visible
 const decorWidth = 1000; // largeur totale du décor
 const edgeZone = 30;          // distance au bord où le scrolling commence
-
-
+//Chargement image décor
+/*const Decor1 = new Image();      //VOIR DANS FUNCTION DRAW
+Decor1.src = 'Asset1-1.bmp'; // Chemin vers BMP ou PNG
+// image silhouette joueur
+const PlayerImg = new Image();
+// PlayerImg.crossOrigin = "anonymous"; // avant .src
+PlayerImg.src = "./Hum1NB.png";
+*/
+const images = [];
+const srcList = [
+  'Asset1-1.bmp',
+  "./Hum1NB.png"
+];
+let loaded = 0;
+srcList.forEach((src, i) => {
+  const img = new Image();
+  img.onload = () => {
+    loaded++;
+    if (loaded === srcList.length) {
+      console.log("Toutes les images sont chargées !");
+    }
+  };
+  img.src = src;
+  images[i] = img;
+});
+const PlayerImg = images[1];
+let indAttente = 0;
+while (indAttente < 10000) { indAttente++; }
 /*Algo - A PLACER
         ///////////////////////////////////////
         - // Créer un objet Image
@@ -59,15 +79,7 @@ function update() {
     cursor.y += Math.sin(touchDir.angle) * speed;
   }
   // Garder le joueur dans la vue (mais déclencher le défilement)
-  if (cursor.x < edgeZone && keys.left === false && keys.right === false) cursor.x += cursor.speed; // cursor reste sur place
-  if (cursor.x > viewWidth - edgeZone && keys.left === false && keys.right === false) cursor.x -= cursor.speed; // cursor reste sur place
-  if (cursor.x < edgeZone && cameraX > 0) {
-    cameraX -= cursor.speed; // défilement à gauche
-    // if (cameraX < 0) cameraX = 0;
-  } else if (cursor.x > viewWidth - edgeZone && cameraX < decorWidth - viewWidth / 2) {
-    cameraX += cursor.speed; // défilement à droite
-    if (cameraX > decorWidth - viewWidth / 2) cameraX = decorWidth - viewWidth / 2;
-  }
+  antiDefilPerm();
   screenWall();
   defileTimerOrDie();
   // Check "tâches"
@@ -95,12 +107,12 @@ function draw() {
   const drawH = PlayerImg.height * scale;
   const offsetX = (WIDTH - drawW) / 2;
   const offsetY = (HEIGHT - drawH) / 2;
-  console.log("WIDTH HEIGHT de PlayerImg", PlayerImg.width, PlayerImg.height);
-  console.log(PlayerImg, offsetX, offsetY, drawW, drawH);
+  //console.log("WIDTH HEIGHT de PlayerImg", PlayerImg.width, PlayerImg.height);
+  //console.log(PlayerImg, offsetX, offsetY, drawW, drawH);
 
   // 1️⃣ Affiche l’image
   ctx.drawImage(
-    Decor1,
+    images[0],
     cameraX, 0,          // zone du décor à afficher
     viewWidth, HEIGHT,   // portion du décor
     0, 0, WIDTH * 2, HEIGHT * 2  // position sur le canvas
@@ -111,7 +123,7 @@ function draw() {
   ctx.drawImage(PlayerImg, offsetX, offsetY + 50, drawW, drawH);
   ctx.globalAlpha = 1;
 
-  console.log("dans draw");
+  //console.log("dans draw");
 
   // 1️⃣ Affiche l’image
   //ctx.drawImage(PlayerImg, offsetX, offsetY, drawW, drawH);
@@ -139,9 +151,6 @@ function draw() {
     cameraX, 0, viewWidth / 2, HEIGHT / 2, // source (partie du décor)
     0, 0, viewWidth, HEIGHT        // destination (sur la "vue")
   );*/
-  //Filtre bleu nuit
-  ctx.fillStyle = "rgba(0, 0, 80, 0.7)"; // bleu foncé avec opacité
-  ctx.fillRect(0, 0, viewWidth, HEIGHT);
 
   // LightTarget
   ctx.fillStyle = "#fff";
@@ -153,14 +162,56 @@ function draw() {
 
   //Dessin effet lampe de poche
   const radius = 120;
-  ctx.save();
-  ctx.fillStyle = "rgba(0, 0, 0, 0.55)";
+  ctx.save();//sauvegarde état
+  ctx.fillStyle = "rgba(4, 0, 60, 0.8)"; // obscurité
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
+  ctx.globalCompositeOperation = "destination-out";// découpe cercle
+  ctx.beginPath();
+  ctx.arc(cursor.x + cursor.w / 2, cursor.y + cursor.h / 2, radius, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.globalAlpha = 0.25;
+  ctx.restore();//restaure état
+  // ctx.globalCompositeOperation = "source-over";
+  //ctx.fillStyle = "rgba(242, 254, 8, 0)"; // zone éclairée
+  //ctx.beginPath();
+  //ctx.arc(cursor.x + cursor.w / 2, cursor.y + cursor.h / 2, radius, 0, Math.PI * 2);
+  //ctx.fill();
+  //  ctx.fillRect(0, 0, viewWidth, HEIGHT);
+  /*
+  const radius = 120;
+  const innerRadius = 40; // rayon du cercle jaune central
+
+  // 1️⃣ Fond bleu nuit semi-transparent
+  ctx.fillStyle = "rgba(22, 6, 249, 0.3)";
+  ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+  // 2️⃣ Découpe un cercle pour la lampe (optionnel, pour un trou clair)
+  ctx.save();
   ctx.globalCompositeOperation = "destination-out";
   ctx.beginPath();
   ctx.arc(cursor.x + cursor.w / 2, cursor.y + cursor.h / 2, radius, 0, Math.PI * 2);
   ctx.fill();
   ctx.restore();
+
+  // 3️⃣ Cercle jaune central
+  ctx.fillStyle = "rgba(242, 254, 8, 0.6)";
+  ctx.beginPath();
+  ctx.arc(cursor.x + cursor.w / 2, cursor.y + cursor.h / 2, innerRadius, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 4️⃣ Dégradé bleu autour du jaune
+  const grad = ctx.createRadialGradient(
+    cursor.x + cursor.w / 2, cursor.y + cursor.h / 2, innerRadius,
+    cursor.x + cursor.w / 2, cursor.y + cursor.h / 2, radius
+  );
+  grad.addColorStop(0, "rgba(242, 254, 8, 0.0)"); // transition douce
+  grad.addColorStop(1, "rgba(22, 6, 249, 0.4)"); // bleu nuit
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.arc(cursor.x + cursor.w / 2, cursor.y + cursor.h / 2, radius, 0, Math.PI * 2);
+  ctx.fill();
+*/
+
 
   // Timer
   ctx.font = "20px Georgia";
@@ -347,4 +398,15 @@ function creatButton(text, x, y, w, h, onClick) {
   ctx.font = "20px Arial";
   ctx.fillText(text, x + 10, y + 10);
   canvas.addEventListener("click", function handler(event) { })
+}
+
+function antiDefilPerm() {
+  if (cursor.x < edgeZone - 17 && keys.left === false && keys.right === false) cursor.x += cursor.speed; // cursor reste sur place
+  if (cursor.x > viewWidth - edgeZone && keys.left === false && keys.right === false) cursor.x -= cursor.speed; // cursor reste sur place
+  if (cursor.x < edgeZone - 17 && cameraX > 0) {
+    cameraX -= cursor.speed; // défilement à gauche
+  } else if (cursor.x > viewWidth - edgeZone && cameraX < decorWidth - viewWidth / 2) {
+    cameraX += cursor.speed; // défilement à droite
+    if (cameraX > decorWidth - viewWidth / 2) cameraX = decorWidth - viewWidth / 2;
+  }
 }
