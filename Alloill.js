@@ -5,15 +5,8 @@ let HEIGHT = 500;
 //Applique la taille interne authentique
 canvas.width = WIDTH;
 canvas.height = HEIGHT;
-
 console.log("Canvas interne :", canvas.width, canvas.height);
 let viewWidth = WIDTH;   // largeur de la fenêtre visible
-// Si la largeur dépasse l’écran, on réduit
- // if (viewWidth > window.innerWidth) {
-   // viewWidth = window.innerWidth;
-  //  WIDTH = window.innerWidth;
-   // HEIGHT=window.innerWidth;
- // }*/
 // --- GAME STATE ---
 let timeLeft = 60;
 let gameOver = false;
@@ -25,8 +18,25 @@ const keys = { left: false, right: false, up: false, down: false };
 const cursor = { x: WIDTH / 2, y: HEIGHT / 2, w: 16, h: 16, speed: 1.1 };
 let vitesseLampe = 6; // multiplicateur de vitesse lampe de poche
 //Options
+let paused = false;
 const pourcBord = 10;   // pourcentage de bordure
-// Variables pour le défilement
+/////////// Gestion des boutons dans le canvas///////////
+const buttons = [];
+const couleurBtn = "#f1780eff";
+const couleurBtnText = "#005510ff";
+const bHeight = 40; // hauteur standard des boutons
+// Positions prédéfinies selon un numéro d'emplacement
+const buttonPositions = [
+  null, // index 0 inutilisé
+  { x: WIDTH * 0.25, y: 0, w: WIDTH * 0.25, h: bHeight }, // 1 : haut centre-gauche
+  { x: WIDTH * 0.5, y: 0, w: WIDTH * 0.25, h: bHeight }, // 2 : haut centre-droite
+  { x: WIDTH * 0.75, y: 0, w: WIDTH * 0.25, h: bHeight }, // 3 : haut droite
+  { x: 0, y: HEIGHT - bHeight, w: WIDTH * 0.25, h: bHeight }, // 4 : bas gauche
+  { x: WIDTH * 0.25, y: HEIGHT - bHeight, w: WIDTH * 0.25, h: bHeight }, // 5 : bas centre-gauche
+  { x: WIDTH * 0.5, y: HEIGHT - bHeight, w: WIDTH * 0.25, h: bHeight }, // 6 : bas centre-droite
+  { x: WIDTH * 0.75, y: HEIGHT - bHeight, w: WIDTH * 0.25, h: bHeight } // 7 : bas droite
+];
+//////////// Variables pour le défilement/////////////
 let cameraX = 0;        // décalage horizontal de la "vue"
 const decorWidth = 1000; // largeur totale du décor
 const edgeZone = 30;          // distance au bord où le scrolling commence
@@ -232,8 +242,13 @@ function draw() {
   //Adaptation mobile
   //const ratio = 1000 / 250; //  décor d’origine
 
-    //HEIGHT = WIDTH * ratio;
-  
+  //HEIGHT = WIDTH * ratio;
+
+  createButton("F1-P: Pause", 7, () => {
+    paused = true;   // ou paused = !paused pour toggle
+    console.log("Jeu mis en pause !");
+  });
+
 }
 
 
@@ -247,7 +262,6 @@ function draw() {
  ****OBJETS DE DECOR
  ****TÂCHES
  ***MENU PAUSE*/
-let paused = false;
 window.addEventListener("keydown", e => {
   if (e.key === "Escape" || e.key === "F1" || e.key.toLowerCase() === "p" || e.key === "h" || e.key === "H") {
     e.preventDefault(); // empêche F1 d’ouvrir l’aide navigateur
@@ -317,7 +331,7 @@ function handleTouch(e) {
   const rect = canvas.getBoundingClientRect();
   const x = touch.clientX - rect.left;
   const y = touch.clientY - rect.top;
-
+  handlePointer(x, y);
   // coordonnées relatives au centre
   const dx = x - WIDTH / 2;
   const dy = y - HEIGHT / 2;
@@ -395,6 +409,7 @@ function affOptions() {
   writeLine(4, "Reprendre le jeu");
 }
 
+/*
 function creatButton(text, x, y, w, h, onClick) {
   ctx.fillStyle = "#333";
   ctx.fillRect(x, y, w, h);
@@ -403,7 +418,47 @@ function creatButton(text, x, y, w, h, onClick) {
   ctx.fillText(text, x + 10, y + 10);
   canvas.addEventListener("click", function handler(event) { })
 }
+  */
 
+// Création d'un bouton
+function createButton(text, emplacement, action) {
+  const pos = buttonPositions[emplacement];
+  if (!pos) {
+    console.warn("Emplacement inconnu :", emplacement);
+    return;
+  }
+  const { x, y, w, h } = pos;
+  // Stocker le bouton
+  buttons.push({ text, x, y, w, h, action });
+  // Redessine tous les boutons
+  for (const b of buttons) {
+    ctx.fillStyle = couleurBtn;
+    ctx.fillRect(b.x, b.y, b.w, b.h);
+    ctx.fillStyle = couleurBtnText;
+    ctx.font = "20px Arial";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "top";
+    ctx.fillText(b.text, b.x + 8, b.y + 12);
+  };
+}
+// Détection clic/touch
+function handlePointer(x, y) {
+  for (const b of buttons) {
+    if (x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h) {
+      if (b.action) b.action();
+      return;
+    }
+  }
+}
+/*// Tactile
+canvas.addEventListener("touchstart", e => {
+  const rect = canvas.getBoundingClientRect();
+  const t = e.touches[0];
+  const x = t.clientX - rect.left;
+  const y = t.clientY - rect.top;
+  handlePointer(x, y);
+});
+*/
 function antiDefilPerm() {
   if (cursor.x < edgeZone - 17 && keys.left === false && keys.right === false) cursor.x += cursor.speed; // cursor reste sur place
   if (cursor.x > viewWidth - edgeZone && keys.left === false && keys.right === false) cursor.x -= cursor.speed; // cursor reste sur place
@@ -414,3 +469,4 @@ function antiDefilPerm() {
     if (cameraX > decorWidth - viewWidth / 2) cameraX = decorWidth - viewWidth / 2;
   }
 }
+
