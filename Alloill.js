@@ -47,7 +47,7 @@ srcList.forEach((src, i) => {
 });
 const PlayerImg = images[1];
 let indAttente = 0;
-while (indAttente < 10000) { indAttente++; }
+while (indAttente < 100000) { indAttente++; }
 /*Algo - A PLACER
         ///////////////////////////////////////
         - // Créer un objet Image
@@ -118,6 +118,7 @@ function draw() {
     0, 0, WIDTH * 2, HEIGHT * 2  // position sur le canvas
   );
   // Dessiner uniquement la portion visible du décor*/
+  //effaceCouleur
   ctx.globalCompositeOperation = "source-over"; // par défaut 
   ctx.globalAlpha = 0.25;
   ctx.drawImage(PlayerImg, offsetX, offsetY + 50, drawW, drawH);
@@ -162,20 +163,20 @@ function draw() {
 
   //Dessin effet lampe de poche
   const radius = 120;
-  ctx.save();//sauvegarde état
+  //ctx.save();//sauvegarde état
   ctx.fillStyle = "rgba(4, 0, 60, 0.8)"; // obscurité
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
-  ctx.globalCompositeOperation = "destination-out";// découpe cercle
-  ctx.beginPath();
-  ctx.arc(cursor.x + cursor.w / 2, cursor.y + cursor.h / 2, radius, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.globalAlpha = 0.25;
-  ctx.restore();//restaure état
-  // ctx.globalCompositeOperation = "source-over";
-  //ctx.fillStyle = "rgba(242, 254, 8, 0)"; // zone éclairée
+  //ctx.globalCompositeOperation = "destination-out";// découpe cercle
   //ctx.beginPath();
   //ctx.arc(cursor.x + cursor.w / 2, cursor.y + cursor.h / 2, radius, 0, Math.PI * 2);
   //ctx.fill();
+  //ctx.globalAlpha = 0.8;
+  //ctx.restore();//restaure état
+  // ctx.globalCompositeOperation = "source-over";
+  ctx.fillStyle = "rgba(242, 254, 8, 0.2)"; // zone éclairée
+  ctx.beginPath();
+  ctx.arc(cursor.x + cursor.w / 2, cursor.y + cursor.h / 2, radius, 0, Math.PI * 2);
+  ctx.fill();
   //  ctx.fillRect(0, 0, viewWidth, HEIGHT);
   /*
   const radius = 120;
