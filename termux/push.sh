@@ -17,21 +17,25 @@ if [ ! -d "$DOSSIER2" ]; then
     echo "Erreur : $DOSSIER2 n'existe pas."
     exit 1
 fi
+echo "Dossier local repéré."
 
 # Suppression dossier dans chemin1
 rm -rf "$DOSSIER1"
+echo "Suppression ancien distant : ok."
 
 # Copie depuis chemin2 vers chemin1
 cp -r "$DOSSIER2" "$DOSSIER1"
-
+echo "Copie pour envoi : ok."
 # Git add / commit / push
 cd "$DOSSIER1" || exit
 git add .
+echo "Git add ok."
 
 echo -n "Message du commit : "
 read MESSAGE
 
 git commit -m "$MESSAGE"
+echo "Commit ok."
 git push
 
 echo "Synchronisation + push terminés."

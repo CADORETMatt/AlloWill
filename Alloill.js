@@ -1,8 +1,19 @@
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
-const WIDTH = canvas.width;
-const HEIGHT = canvas.height;
+let WIDTH = Math.min(window.innerWidth, 500);
+let HEIGHT = 500;
+//Applique la taille interne authentique
+canvas.width = WIDTH;
+canvas.height = HEIGHT;
 
+console.log("Canvas interne :", canvas.width, canvas.height);
+let viewWidth = WIDTH;   // largeur de la fenêtre visible
+// Si la largeur dépasse l’écran, on réduit
+ // if (viewWidth > window.innerWidth) {
+   // viewWidth = window.innerWidth;
+  //  WIDTH = window.innerWidth;
+   // HEIGHT=window.innerWidth;
+ // }*/
 // --- GAME STATE ---
 let timeLeft = 60;
 let gameOver = false;
@@ -17,17 +28,9 @@ let vitesseLampe = 6; // multiplicateur de vitesse lampe de poche
 const pourcBord = 10;   // pourcentage de bordure
 // Variables pour le défilement
 let cameraX = 0;        // décalage horizontal de la "vue"
-const viewWidth = WIDTH;   // largeur de la fenêtre visible
 const decorWidth = 1000; // largeur totale du décor
 const edgeZone = 30;          // distance au bord où le scrolling commence
-//Chargement image décor
-/*const Decor1 = new Image();      //VOIR DANS FUNCTION DRAW
-Decor1.src = 'Asset1-1.bmp'; // Chemin vers BMP ou PNG
-// image silhouette joueur
-const PlayerImg = new Image();
-// PlayerImg.crossOrigin = "anonymous"; // avant .src
-PlayerImg.src = "./Hum1NB.png";
-*/
+
 const images = [];
 const srcList = [
   'Asset1-1.bmp',
@@ -68,6 +71,7 @@ let maxSpeed = 4;    // vitesse max du déplacement
 canvas.addEventListener("touchstart", handleTouch);
 canvas.addEventListener("touchmove", handleTouch);
 canvas.addEventListener("touchend", () => touchDir = null);
+console.log("tactile ok");
 // --- GAME LOOP ---
 function update() {
   if (gameOver) return;
@@ -85,6 +89,7 @@ function update() {
   // Check "tâches"
   incTaskOrWin(); //cursor{}, tasksDone, requiredTasks, endGame()   
 }
+console.log("update ok");
 //**JEU***********************************
 /*     ***INPUT
        ***Le joueur est au centre
@@ -223,14 +228,12 @@ function draw() {
 
   /*    ***DEPLACEMENTJOUEUR
   //    ***affichage 250x250 */
-  // Variables pour le défilement
+  // Variables mpour le défilement
   //Adaptation mobile
   //const ratio = 1000 / 250; //  décor d’origine
-  // Si la largeur dépasse l’écran, on réduit
-  if (viewWidth > window.innerWidth) {
-    viewWidth = window.innerWidth;
+
     //HEIGHT = WIDTH * ratio;
-  }
+  
 }
 
 
