@@ -14,6 +14,9 @@ let tasksDone = 0;
 let requiredTasks = 3;
 // Gestion du clavier
 const keys = { left: false, right: false, up: false, down: false };
+//////function GestionTactile() {
+let touchDir = null; // direction du doigt (angle, distance) 
+let maxSpeed = 4;    // vitesse max du déplacement
 // --- CURSOR ---
 const cursor = { x: WIDTH / 2, y: HEIGHT / 2, w: 16, h: 16, speed: 1.1 };
 let vitesseLampe = 6; // multiplicateur de vitesse lampe de poche
@@ -40,24 +43,13 @@ const buttonPositions = [
 let cameraX = 0;        // décalage horizontal de la "vue"
 const decorWidth = 1000; // largeur totale du décor
 const edgeZone = 30;          // distance au bord où le scrolling commence
-
 const images = [];
 const srcList = [
   'Asset1-1.bmp',
   "./Hum1NB.png"
 ];
 let loaded = 0;
-srcList.forEach((src, i) => {
-  const img = new Image();
-  img.onload = () => {
-    loaded++;
-    if (loaded === srcList.length) {
-      console.log("Toutes les images sont chargées !");
-    }
-  };
-  img.src = src;
-  images[i] = img;
-});
+chargImages();
 const PlayerImg = images[1];
 let indAttente = 0;
 while (indAttente < 100000) { indAttente++; }
@@ -74,229 +66,10 @@ alert("Push on keyboard for start");
 //*-MENU *******************************
 // --- INPUT ---
 GestionClavier();
-//////function GestionTactile() {
-let touchDir = null; // direction du doigt (angle, distance) 
-let maxSpeed = 4;    // vitesse max du déplacement
-
-canvas.addEventListener("touchstart", handleTouch);
-canvas.addEventListener("touchmove", handleTouch);
-canvas.addEventListener("touchend", () => touchDir = null);
-console.log("tactile ok");
+GestionTactile();
+ecouteTouchePause();
 // --- GAME LOOP ---
-function update() {
-  if (gameOver) return;
-  moveClavier();
-  // tactile orienté
-  if (touchDir) {
-    const speed = maxSpeed * touchDir.intensity;
-    cursor.x += Math.cos(touchDir.angle) * speed;
-    cursor.y += Math.sin(touchDir.angle) * speed;
-  }
-  // Garder le joueur dans la vue (mais déclencher le défilement)
-  antiDefilPerm();
-  screenWall();
-  defileTimerOrDie();
-  // Check "tâches"
-  incTaskOrWin(); //cursor{}, tasksDone, requiredTasks, endGame()   
-}
-console.log("update ok");
-//**JEU***********************************
-/*     ***INPUT
-       ***Le joueur est au centre
-*/
-/*     ***écran à 1000x250
-       ***affichage décor
-       ****Assets
-       ****AffBMP*/
-// --- DESSIN ---
-
-function draw() {
-
-  ctx.fillStyle = "#1a1a1a";
-  ctx.fillRect(0, 0, WIDTH, HEIGHT);
-
-  //  PlayerImg.onload = () => {
-  // Calcul centrage et échelle
-  const scale = 1;//Math.min(WIDTH / PlayerImg.width, HEIGHT / PlayerImg.height);
-  const drawW = PlayerImg.width * scale;
-  const drawH = PlayerImg.height * scale;
-  const offsetX = (WIDTH - drawW) / 2;
-  const offsetY = (HEIGHT - drawH) / 2;
-  //console.log("WIDTH HEIGHT de PlayerImg", PlayerImg.width, PlayerImg.height);
-  //console.log(PlayerImg, offsetX, offsetY, drawW, drawH);
-
-  // 1️⃣ Affiche l’image
-  ctx.drawImage(
-    images[0],
-    cameraX, 0,          // zone du décor à afficher
-    viewWidth, HEIGHT,   // portion du décor
-    0, 0, WIDTH * 2, HEIGHT * 2  // position sur le canvas
-  );
-  // Dessiner uniquement la portion visible du décor*/
-  //effaceCouleur
-  ctx.globalCompositeOperation = "source-over"; // par défaut 
-  ctx.globalAlpha = 0.25;
-  ctx.drawImage(PlayerImg, offsetX, offsetY + 50, drawW, drawH);
-  ctx.globalAlpha = 1;
-
-  //console.log("dans draw");
-
-  // 1️⃣ Affiche l’image
-  //ctx.drawImage(PlayerImg, offsetX, offsetY, drawW, drawH);
-  /* // 2️⃣ Lit ses pixels
-   const imageData = ctx.getImageData(offsetX, offsetY, drawW, drawH);
-   const data = imageData.data;
-   // 3️⃣ Modifie chaque pixel
-   for (let i = 0; i <
-     data.length; i += 4) {
-     console.log("data[i] r=", data[i]);
-     const r = data[i];
-     if (r > 200) {
-       data[i + 3] = 0; // transparent
-     } else {
-
-      data[i] = 0; data[i + 1] = 0; data[i + 2] = 0;
-       data[i + 3] = 64; // noir à 25%
-     }
-   }
-   // 4️⃣ Réécrit les pixels modifiés
-   ctx.putImageData(imageData, offsetX, offsetY);*/
-
-  // Dessiner uniquement la portion visible du décor*/
-  /*ctx.drawImage(Decor1,
-    cameraX, 0, viewWidth / 2, HEIGHT / 2, // source (partie du décor)
-    0, 0, viewWidth, HEIGHT        // destination (sur la "vue")
-  );*/
-
-  // LightTarget
-  ctx.fillStyle = "#fff";
-  ctx.fillRect(cursor.x, cursor.y, cursor.w, cursor.h);
-
-  //newPage();
-
-  /////////// Player
-
-  //Dessin effet lampe de poche
-  const radius = 120;
-  //ctx.save();//sauvegarde état
-  ctx.fillStyle = "rgba(4, 0, 60, 0.8)"; // obscurité
-  ctx.fillRect(0, 0, WIDTH, HEIGHT);
-  //ctx.globalCompositeOperation = "destination-out";// découpe cercle
-  //ctx.beginPath();
-  //ctx.arc(cursor.x + cursor.w / 2, cursor.y + cursor.h / 2, radius, 0, Math.PI * 2);
-  //ctx.fill();
-  //ctx.globalAlpha = 0.8;
-  //ctx.restore();//restaure état
-  // ctx.globalCompositeOperation = "source-over";
-  ctx.fillStyle = "rgba(242, 254, 8, 0.2)"; // zone éclairée
-  ctx.beginPath();
-  ctx.arc(cursor.x + cursor.w / 2, cursor.y + cursor.h / 2, radius, 0, Math.PI * 2);
-  ctx.fill();
-  //  ctx.fillRect(0, 0, viewWidth, HEIGHT);
-  /*
-  const radius = 120;
-  const innerRadius = 40; // rayon du cercle jaune central
-
-  // 1️⃣ Fond bleu nuit semi-transparent
-  ctx.fillStyle = "rgba(22, 6, 249, 0.3)";
-  ctx.fillRect(0, 0, WIDTH, HEIGHT);
-
-  // 2️⃣ Découpe un cercle pour la lampe (optionnel, pour un trou clair)
-  ctx.save();
-  ctx.globalCompositeOperation = "destination-out";
-  ctx.beginPath();
-  ctx.arc(cursor.x + cursor.w / 2, cursor.y + cursor.h / 2, radius, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
-
-  // 3️⃣ Cercle jaune central
-  ctx.fillStyle = "rgba(242, 254, 8, 0.6)";
-  ctx.beginPath();
-  ctx.arc(cursor.x + cursor.w / 2, cursor.y + cursor.h / 2, innerRadius, 0, Math.PI * 2);
-  ctx.fill();
-
-  // 4️⃣ Dégradé bleu autour du jaune
-  const grad = ctx.createRadialGradient(
-    cursor.x + cursor.w / 2, cursor.y + cursor.h / 2, innerRadius,
-    cursor.x + cursor.w / 2, cursor.y + cursor.h / 2, radius
-  );
-  grad.addColorStop(0, "rgba(242, 254, 8, 0.0)"); // transition douce
-  grad.addColorStop(1, "rgba(22, 6, 249, 0.4)"); // bleu nuit
-  ctx.fillStyle = grad;
-  ctx.beginPath();
-  ctx.arc(cursor.x + cursor.w / 2, cursor.y + cursor.h / 2, radius, 0, Math.PI * 2);
-  ctx.fill();
-*/
-
-
-  // Timer
-  ctx.font = "20px Georgia";
-  ctx.fillStyle = "#f33";
-  ctx.fillText(`Temps: ${Math.ceil(timeLeft)}`, 5, 20);//augmenté taille texte
-  ctx.fillText(`Tâches: ${tasksDone}/${requiredTasks}`, 5, 40);
-
-
-  /*    ***DEPLACEMENTJOUEUR
-  //    ***affichage 250x250 */
-  // Variables mpour le défilement
-  //Adaptation mobile
-  //const ratio = 1000 / 250; //  décor d’origine
-
-  //HEIGHT = WIDTH * ratio;
-
-  createButton("F1-P: Pause", 7, () => {
-    paused = true;   // ou paused = !paused pour toggle
-    console.log("Jeu mis en pause !");
-  });
-
-}
-
-
-
-/****Effet lampe de poche
- ****Adrénaline et Endurance influt la vitesse    
- ***COLLISION
- ***ANIMATION
- ****Le décor change dans le noir
- ***INTERACTIIONS
- ****OBJETS DE DECOR
- ****TÂCHES
- ***MENU PAUSE*/
-window.addEventListener("keydown", e => {
-  if (e.key === "Escape" || e.key === "F1" || e.key.toLowerCase() === "p" || e.key === "h" || e.key === "H") {
-    e.preventDefault(); // empêche F1 d’ouvrir l’aide navigateur
-    paused = !paused;
-    if (!paused) loop(); // reprise
-  }
-});
-/*
- **OPTIONS
-***Vitesse Lampe de poche
-***Vitesse Déplacement*/
-
-/* **EXIT 
- ***CREDITS
-.        ///////////////////////////////////////
- */
-
-// --- FIN DE PARTIE ---
-function endGame(success) {
-  gameOver = true;
-  setTimeout(() => {
-    alert(success ? "Tu as survécu!" : "Le monstre t’a attrapé!");
-    document.location.reload();
-  }, 500);
-}
-
-// --- LOOP ---
-/*function loop() {
-  update();
-  if (paused) return; // on sort de la boucle sans refaire de frame
-  draw();
-  requestAnimationFrame(loop);
-}
 loop();
-*/
 function loop() {
   if (!paused) {
     update();
@@ -307,7 +80,100 @@ function loop() {
     affOptions();
   }
 }
-loop();
+function update() {
+  if (gameOver) return;
+  moveClavier();
+  moveTactile();  // tactile orienté
+  antiDefilPerm();
+  screenWall();
+  defileTimerOrDie();
+  // Check "tâches"
+  incTaskOrWin(); //cursor{}, tasksDone, requiredTasks, endGame()   
+}
+function endGame(success) {
+  gameOver = true;
+  setTimeout(() => {
+    alert(success ? "Tu as survécu!" : "Le monstre t’a attrapé!");
+    document.location.reload();
+  }, 500);
+}
+function draw() {
+  // Calcul centrage et échelle
+  const scale = 1;//Math.min(WIDTH / PlayerImg.width, HEIGHT / PlayerImg.height);
+  const drawW = PlayerImg.width * scale;
+  const drawH = PlayerImg.height * scale;
+  const offsetX = (WIDTH - drawW) / 2;
+  const offsetY = (HEIGHT - drawH) / 2;
+
+  ctx.fillStyle = "#1a1a1a";
+  ctx.fillRect(0, 0, WIDTH, HEIGHT);
+  // 1️⃣ Affiche l’image
+  ctx.drawImage(
+    images[0], cameraX, 0,          // zone du décor à afficher
+    viewWidth, HEIGHT,   // portion du décor
+    0, 0, WIDTH * 2, HEIGHT * 2  // position sur le canvas
+  );// Dessiner uniquement la portion visible du décor*/
+  ctx.globalCompositeOperation = "source-over"; // par défaut 
+  ctx.globalAlpha = 0.25;//opacité pour ombre personnage
+  ctx.drawImage(PlayerImg, offsetX, offsetY + 50, drawW, drawH);
+  ctx.globalAlpha = 1;
+  // LightTarget
+  ctx.fillStyle = "#ffffff00";
+  ctx.fillRect(cursor.x, cursor.y, cursor.w, cursor.h);
+  //Dessin effet lampe de poche
+  const radius = 120;
+  //ctx.save();//sauvegarde état
+  ctx.fillStyle = "rgba(4, 0, 60, 0.8)"; // obscurité
+  ctx.fillRect(0, 0, WIDTH, HEIGHT);
+  ctx.fillStyle = "rgba(242, 254, 8, 0.2)"; // zone éclairée
+  ctx.beginPath();
+  ctx.arc(cursor.x + cursor.w / 2, cursor.y + cursor.h / 2, radius, 0, Math.PI * 2);
+  ctx.fill();
+  // Timer
+  ctx.font = "20px Georgia";
+  ctx.fillStyle = "#f33";
+  ctx.fillText(`Temps: ${Math.ceil(timeLeft)}`, 5, 20);//augmenté taille texte
+  ctx.fillText(`Tâches: ${tasksDone}/${requiredTasks}`, 5, 40);
+  createButton("F1-P: Pause", 7, () => {
+    paused = true;   // ou paused = !paused pour toggle
+    console.log("Jeu mis en pause !");
+  });
+}
+//**JEU***********************************
+/*       ***affichage décor
+***Le joueur est au centre
+  /*    ***DEPLACEMENTJOUEUR
+       ****Assets
+       ****AffBMP*/
+// --- DESSIN ---
+/****Effet lampe de poche
+ ****Adrénaline et Endurance influt la vitesse    
+ ***COLLISION
+ ***ANIMATION
+ ****Le décor change dans le noir
+ ***INTERACTIIONS
+ ****OBJETS DE DECOR
+ ****TÂCHES
+ ***MENU PAUSE*/
+// **OPTIONS /*
+//*** Vitesse Lampe de poche
+//*** Vitesse Déplacement */
+/* **EXIT 
+ ***CREDITS
+.        /////////////////////////////////////// */
+function chargImages() {
+  srcList.forEach((src, i) => {
+    const img = new Image();
+    img.onload = () => {
+      loaded++;
+      if (loaded === srcList.length) {
+        console.log("Toutes les images sont chargées !");
+      }
+    };
+    img.src = src;
+    images[i] = img;
+  });
+}
 
 function GestionClavier() {  // const keys = { left: false, right: false, up: false, down: false, param: false };
   window.addEventListener("keydown", e => {
@@ -326,6 +192,21 @@ function GestionClavier() {  // const keys = { left: false, right: false, up: fa
   });
 }
 
+function GestionTactile() {
+  canvas.addEventListener("touchstart", handleTouch);
+  canvas.addEventListener("touchmove", handleTouch);
+  canvas.addEventListener("touchend", () => touchDir = null);
+  console.log("tactile ok");
+}
+function ecouteTouchePause() {
+  window.addEventListener("keydown", e => {
+    if (e.key === "Escape" || e.key === "F1" || e.key.toLowerCase() === "p" || e.key === "h" || e.key === "H") {
+      e.preventDefault(); // empêche F1 d’ouvrir l’aide navigateur
+      paused = !paused;
+      if (!paused) loop(); // reprise
+    }
+  });
+}
 function handleTouch(e) {
   const touch = e.touches[0];
   const rect = canvas.getBoundingClientRect();
@@ -335,17 +216,13 @@ function handleTouch(e) {
   // coordonnées relatives au centre
   const dx = x - WIDTH / 2;
   const dy = y - HEIGHT / 2;
-
   const dist = Math.hypot(dx, dy);
   const angle = Math.atan2(dy, dx);
-
   // on limite la distance max (500/2 = rayon max)
   const maxDist = WIDTH / 2;
   const intensity = Math.min(dist / maxDist, 1); // entre 0 et 1
-
   touchDir = { angle, intensity };
 }
-
 function moveClavier() {
   //const cursor = { x: WIDTH / 2, y: HEIGHT / 2, w: 16, h: 16, speed: 3.1 };
   if (keys.left) cursor.x -= vitesseLampe * cursor.speed;
@@ -353,17 +230,21 @@ function moveClavier() {
   if (keys.up) cursor.y -= vitesseLampe * cursor.speed;
   if (keys.down) cursor.y += vitesseLampe * cursor.speed;
 }
-
+function moveTactile() {
+  if (touchDir) {
+    const speed = maxSpeed * touchDir.intensity;
+    cursor.x += Math.cos(touchDir.angle) * speed;
+    cursor.y += Math.sin(touchDir.angle) * speed;
+  }
+}
 function screenWall() { //cursor{},viewWidth,HEIGHT
   cursor.x = Math.max(0, Math.min(viewWidth - cursor.w, cursor.x));
   cursor.y = Math.max(0, Math.min(HEIGHT - cursor.h, cursor.y));
 }
-
 function defileTimerOrDie() { //timeLeft, endGame()
   timeLeft -= 1 / 60;
   if (timeLeft <= 0) endGame(false);
 }
-
 function incTaskOrWin() {
   if (cursor.x < 20 && cursor.y < 20 && tasksDone < requiredTasks) {
     tasksDone++;
@@ -371,12 +252,6 @@ function incTaskOrWin() {
     if (tasksDone === requiredTasks) endGame(true);
   }
 }
-
-/*function newPage() {
-  ctx.fillStyle = "#6d6d6d7b";
-  ctx.fillRect(WIDTH * 10 / 100, 10, 400, 400);
-}*/
-
 function drawPauseOverlay() {
   ctx.fillStyle = "#6d6d6d7b";
   ctx.fillRect(WIDTH * pourcBord / 100, HEIGHT * pourcBord / 100, WIDTH - (WIDTH * 2 * pourcBord / 100), HEIGHT - (HEIGHT * 2 * pourcBord / 100));
@@ -386,6 +261,10 @@ function drawPauseOverlay() {
   ctx.fillStyle = "#ff8400ff";
   ctx.font = "60px Georgia";
   ctx.fillText("⏸ Pause ", 130, (HEIGHT / 2) - 95);
+  createButton("F1-P: Pause", 7, () => {
+    paused = false;   // ou paused = !paused pour toggle
+    console.log("Arrêt de la pause !");
+  });
 }
 
 function writeLine(numLigne, text) {
@@ -408,19 +287,6 @@ function affOptions() {
   writeLine(3, "Echap/P/F1/H : ");
   writeLine(4, "Reprendre le jeu");
 }
-
-/*
-function creatButton(text, x, y, w, h, onClick) {
-  ctx.fillStyle = "#333";
-  ctx.fillRect(x, y, w, h);
-  ctx.fillStyle = "#fff";
-  ctx.font = "20px Arial";
-  ctx.fillText(text, x + 10, y + 10);
-  canvas.addEventListener("click", function handler(event) { })
-}
-  */
-
-// Création d'un bouton
 function createButton(text, emplacement, action) {
   const pos = buttonPositions[emplacement];
   if (!pos) {
@@ -450,15 +316,6 @@ function handlePointer(x, y) {
     }
   }
 }
-/*// Tactile
-canvas.addEventListener("touchstart", e => {
-  const rect = canvas.getBoundingClientRect();
-  const t = e.touches[0];
-  const x = t.clientX - rect.left;
-  const y = t.clientY - rect.top;
-  handlePointer(x, y);
-});
-*/
 function antiDefilPerm() {
   if (cursor.x < edgeZone - 17 && keys.left === false && keys.right === false) cursor.x += cursor.speed; // cursor reste sur place
   if (cursor.x > viewWidth - edgeZone && keys.left === false && keys.right === false) cursor.x -= cursor.speed; // cursor reste sur place
@@ -469,4 +326,46 @@ function antiDefilPerm() {
     if (cameraX > decorWidth - viewWidth / 2) cameraX = decorWidth - viewWidth / 2;
   }
 }
-
+//  function enleveCouleur() {
+// 1️⃣ Affiche l’image
+//ctx.drawImage(PlayerImg, offsetX, offsetY, drawW, drawH);
+/* // 2️⃣ Lit ses pixels
+ const imageData = ctx.getImageData(offsetX, offsetY, drawW, drawH);
+ const data = imageData.data;
+ // 3️⃣ Modifie chaque pixel
+ for (let i = 0; i <
+   data.length; i += 4) {
+   console.log("data[i] r=", data[i]);
+   const r = data[i];
+   if (r > 200) {
+     data[i + 3] = 0; // transparent
+   } else {
+    data[i] = 0; data[i + 1] = 0; data[i + 2] = 0;
+     data[i + 3] = 64; // noir à 25%
+   }
+ }
+ // 4️⃣ Réécrit les pixels modifiés
+ ctx.putImageData(imageData, offsetX, offsetY);
+}*/
+/*function drawLampEffect() {
+  const radius = 120;
+  const innerRadius = 40; // rayon du cercle jaune central
+  // 2️⃣ Découpe un cercle pour la lampe (optionnel, pour un trou clair)
+  ctx.save();
+  ctx.globalCompositeOperation = "destination-out";
+  ctx.beginPath();
+  ctx.arc(cursor.x + cursor.w / 2, cursor.y + cursor.h / 2, radius, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+  // 4️⃣ Dégradé bleu autour du jaune
+  const grad = ctx.createRadialGradient(
+    cursor.x + cursor.w / 2, cursor.y + cursor.h / 2, innerRadius,
+    cursor.x + cursor.w / 2, cursor.y + cursor.h / 2, radius
+  );
+  grad.addColorStop(0, "rgba(242, 254, 8, 0.0)"); // transition douce
+  grad.addColorStop(1, "rgba(22, 6, 249, 0.4)"); // bleu nuit
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.arc(cursor.x + cursor.w / 2, cursor.y + cursor.h / 2, radius, 0, Math.PI * 2);
+  ctx.fill();
+}*/
