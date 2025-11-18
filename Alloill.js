@@ -79,6 +79,8 @@ function loop() {
   } else {
     drawPauseOverlay();
     affOptions();
+    canvas.addEventListener("touchstart", handleTouch);
+
   }
 }
 function update() {
@@ -143,7 +145,7 @@ function draw() {
   ctx.fillText(`Temps: ${Math.ceil(timeLeft)}`, 5, 20);//augmenté taille texte
   ctx.fillText(`Tâches: ${tasksDone}/${requiredTasks}`, 5, 40);
   createButton("F1-P: Pause", 7, () => {
-    paused = true;   // ou paused = !paused pour toggle
+    paused = !paused;   // ou paused = !paused pour toggle
     console.log("Jeu mis en pause !");
   });
 }
@@ -269,10 +271,10 @@ function drawPauseOverlay() {
   ctx.fillStyle = "#ff8400ff";
   ctx.font = "60px Georgia";
   ctx.fillText("⏸ Pause ", 130, (HEIGHT / 2) - 95);
-  createButton("F1-P: Pause", 7, () => {
-    paused = false;   // ou paused = !paused pour toggle
-    console.log("Arrêt de la pause !");
-  });
+  //createButton("F1-P: Pause", 7, () => {
+  //paused = false;   // ou paused = !paused pour toggle
+  //console.log("Arrêt de la pause !");
+  //});
 }
 
 function writeLine(numLigne, text) {
