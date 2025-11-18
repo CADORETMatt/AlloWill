@@ -46,7 +46,8 @@ const edgeZone = 30;          // distance au bord où le scrolling commence
 const images = [];
 const srcList = [
   'Asset1-1.bmp',
-  "./Hum1NB.png"
+  "./Hum1NB.png",
+  'rond1000.png'
 ];
 let loaded = 0;
 chargImages();
@@ -129,6 +130,13 @@ function draw() {
   ctx.beginPath();
   ctx.arc(cursor.x + cursor.w / 2, cursor.y + cursor.h / 2, radius, 0, Math.PI * 2);
   ctx.fill();
+  ctx.globalAlpha = 0.8;
+  ctx.drawImage(
+    images[2], 500 - (cursor.x + cursor.w / 2), 500 - (cursor.y + cursor.h / 2),          // zone du décor à afficher
+    WIDTH, HEIGHT,   // portion du décor
+    0, 0, WIDTH, HEIGHT  // position sur le canvas
+  );// Dessiner uniquement la portion visible du décor*/
+  ctx.globalAlpha = 1;
   // Timer
   ctx.font = "20px Georgia";
   ctx.fillStyle = "#f33";
