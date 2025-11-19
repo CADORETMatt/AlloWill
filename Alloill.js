@@ -13,13 +13,18 @@ let gameOver = false;
 let tasksDone = 0;
 let requiredTasks = 3;
 // Gestion du clavier
-const keys = { left: false, right: false, up: false, down: false };
+const keys = { left: false, right: false, up: false, down: false, space: false };
 //////function GestionTactile() {
 let touchDir = null; // direction du doigt (angle, distance) 
-let maxSpeed = 4;    // vitesse max du déplacement
+let maxSpeed = 2;    // vitesse max du déplacement
 // --- CURSOR ---
-const cursor = { x: WIDTH / 2, y: HEIGHT / 2, w: 16, h: 16, speed: 1.1 };
-let vitesseLampe = 6; // multiplicateur de vitesse lampe de poche
+const cursor = { x: WIDTH / 2, y: HEIGHT / 2, w: 16, h: 16, speed: 1.5 };
+let vitesseLampe = 4; // multiplicateur de vitesse lampe de poche
+let vitesseCourse = 6; // vitesse en courant
+//////////// Variables pour le défilement/////////////
+let cameraX = 0;        // décalage horizontal de la "vue"
+const decorWidth = 1000; // largeur totale du décor
+const edgeZone = 30;          // distance au bord où le scrolling commence
 //Options
 let paused = false;
 const pourcBord = 10;   // pourcentage de bordure
@@ -39,10 +44,6 @@ const buttonPositions = [
   { x: WIDTH * 0.5, y: HEIGHT - bHeight, w: WIDTH * 0.25, h: bHeight }, // 6 : bas centre-droite
   { x: WIDTH * 0.75, y: HEIGHT - bHeight, w: WIDTH * 0.25, h: bHeight } // 7 : bas droite
 ];
-//////////// Variables pour le défilement/////////////
-let cameraX = 0;        // décalage horizontal de la "vue"
-const decorWidth = 1000; // largeur totale du décor
-const edgeZone = 30;          // distance au bord où le scrolling commence
 const images = [];
 const srcList = [
   'Asset1-1.bmp',
@@ -75,13 +76,11 @@ function loop() {
   if (!paused) {
     update();
     draw();
-    requestAnimationFrame(loop);
   } else {
     drawPauseOverlay();
     affOptions();
-    canvas.addEventListener("touchstart", handleTouch);
-
   }
+  requestAnimationFrame(loop);
 }
 function update() {
   if (gameOver) return;
@@ -146,7 +145,7 @@ function draw() {
   ctx.fillText(`Tâches: ${tasksDone}/${requiredTasks}`, 5, 40);
   createButton("F1-P: Pause", 7, () => {
     paused = !paused;   // ou paused = !paused pour toggle
-    console.log("Jeu mis en pause !");
+    console.log("Toggle pause !");
   });
 }
 //**JEU***********************************
@@ -184,24 +183,22 @@ function chargImages() {
     images[i] = img;
   });
 }
-
 function GestionClavier() {  // const keys = { left: false, right: false, up: false, down: false, param: false };
   window.addEventListener("keydown", e => {
     if (e.key === "ArrowLeft") keys.left = true;
     if (e.key === "ArrowRight") keys.right = true;
     if (e.key === "ArrowUp") keys.up = true;
     if (e.key === "ArrowDown") keys.down = true;
-    //  if (e.key === "h") keys.param = true;
-
+    if (e.key === " " || e.key === "Space") keys.space = true;
   });
   window.addEventListener("keyup", e => {
     if (e.key === "ArrowLeft") keys.left = false;
     if (e.key === "ArrowRight") keys.right = false;
     if (e.key === "ArrowUp") keys.up = false;
     if (e.key === "ArrowDown") keys.down = false;
+    if (e.key === " " || e.key === "Space") keys.space = false;
   });
 }
-
 function GestionTactile() {
   canvas.addEventListener("touchstart", handleTouch);
   canvas.addEventListener("touchmove", handleTouch);
@@ -235,6 +232,7 @@ function handleTouch(e) {
 }
 function moveClavier() {
   //const cursor = { x: WIDTH / 2, y: HEIGHT / 2, w: 16, h: 16, speed: 3.1 };
+  cursor.speed = keys.space ? vitesseCourse : maxSpeed;
   if (keys.left) cursor.x -= vitesseLampe * cursor.speed;
   if (keys.right) cursor.x += vitesseLampe * cursor.speed;
   if (keys.up) cursor.y -= vitesseLampe * cursor.speed;
@@ -294,8 +292,8 @@ function writeLine(numLigne, text) {
 function affOptions() {
   writeLine(1, "Avancez ou reculez :");
   writeLine(2, "Flèches directionnelles");
-  writeLine(3, "Echap/P/F1/H : ");
-  writeLine(4, "Reprendre le jeu");
+  writeLine(3, "Echap/P/F1 : Pause");
+  writeLine(4, "Espace : Courir");
 }
 function createButton(text, emplacement, action) {
   const pos = buttonPositions[emplacement];
