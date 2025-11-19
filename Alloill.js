@@ -71,6 +71,10 @@ alert("Push on keyboard for start");
 GestionClavier();
 GestionTactile();
 ecouteTouchePause();
+createButton("F1-P: Pause", 7, () => {
+    paused = !paused;   // ou paused = !paused pour toggle
+   console.log("Toggle pause !");
+  }); 
 //userInactif();
 function userInactif() {
   // Aucune activité utilisateur (clavier et tactile) donne true dans isImmobile
@@ -108,12 +112,14 @@ function update() {
   incTaskOrWin(); //cursor{}, tasksDone, requiredTasks, endGame()   
 }
 function endGame(success) {
+  if (gameOver) return;   // <-- stoppe les appels multiples
   gameOver = true;
   setTimeout(() => {
     alert(success ? "Tu as survécu!" : "Le monstre t’a attrapé!");
     document.location.reload();
   }, 500);
 }
+
 function draw() {
   // Calcul centrage et échelle
   const scale = 1;//Math.min(WIDTH / PlayerImg.width, HEIGHT / PlayerImg.height);
@@ -260,12 +266,10 @@ function Timer() {
   ctx.fillStyle = "#f33";
   ctx.fillText(`Temps: ${Math.ceil(timeLeft)}`, 5, 20);//augmenté taille texte
   ctx.fillText(`Tâches: ${tasksDone}/${requiredTasks}`, 5, 40);
-  createButton("F1-P: Pause", 7, () => {
-    paused = !paused;   // ou paused = !paused pour toggle
-    console.log("Toggle pause !");
-  });
+  drawButtons(buttons);
 }
-function defileTimerOrDie() { //timeLeft, endGame()
+function defileTimerOrDie() {
+  if (gameOver) return;
   timeLeft -= 1 / 60;
   if (timeLeft <= 0) endGame(false);
 }
@@ -320,6 +324,8 @@ function createButton(text, emplacement, action) {
   const { x, y, w, h } = pos;
   // Stocker le bouton
   buttons.push({ text, x, y, w, h, action });
+}
+ function drawButtons(buttons){
   // Redessine tous les boutons
   for (const b of buttons) {
     ctx.fillStyle = couleurBtn;
@@ -330,7 +336,7 @@ function createButton(text, emplacement, action) {
     ctx.textBaseline = "top";
     ctx.fillText(b.text, b.x + 8, b.y + 12);
   };
-}
+ }
 // Détection clic/touch
 function handlePointer(x, y) {
   for (const b of buttons) {
