@@ -44,6 +44,7 @@ const buttonPositions = [
   { x: WIDTH * 0.5, y: HEIGHT - bHeight, w: WIDTH * 0.25, h: bHeight }, // 6 : bas centre-droite
   { x: WIDTH * 0.75, y: HEIGHT - bHeight, w: WIDTH * 0.25, h: bHeight } // 7 : bas droite
 ];
+let isImmobile = false;
 const images = [];
 const srcList = [
   'Asset1-1.bmp',
@@ -70,12 +71,27 @@ alert("Push on keyboard for start");
 GestionClavier();
 GestionTactile();
 ecouteTouchePause();
+//userInactif();
+function userInactif() {
+  // Aucune activité utilisateur (clavier et tactile) donne true dans isImmobile
+  if (!keys.left && !keys.right && !keys.up && !keys.down && !touchDir) {
+    isImmobile = true;
+  }
+  else { isImmobile = false; }
+  //setTimeout(userInactif, 1000); // vérifie toutes les secondes  
+}
 // --- GAME LOOP ---
 loop();
 function loop() {
+  // userInactif();
   if (!paused) {
-    update();
-    draw();
+    // si clavier et tactile inactifs, isImmobile = true
+    if (!isImmobile) {
+      update();
+      draw();
+    }
+    defileTimerOrDie();
+    Timer();
   } else {
     drawPauseOverlay();
     affOptions();
@@ -88,7 +104,6 @@ function update() {
   moveTactile();  // tactile orienté
   antiDefilPerm();
   screenWall();
-  defileTimerOrDie();
   // Check "tâches"
   incTaskOrWin(); //cursor{}, tasksDone, requiredTasks, endGame()   
 }
@@ -106,9 +121,9 @@ function draw() {
   const drawH = PlayerImg.height * scale;
   const offsetX = (WIDTH - drawW) / 2;
   const offsetY = (HEIGHT - drawH) / 2;
-
   ctx.fillStyle = "#1a1a1a";
-  ctx.fillRect(0, 0, WIDTH, HEIGHT);
+  ctx.clearRect(0, 0, WIDTH, HEIGHT);
+  //  ctx.fillRect(0, 0, WIDTH, HEIGHT);
   // 1️⃣ Affiche l’image
   ctx.drawImage(
     images[0], cameraX, 0,          // zone du décor à afficher
@@ -138,15 +153,6 @@ function draw() {
     0, 0, WIDTH, HEIGHT  // position sur le canvas
   );// Dessiner uniquement la portion visible du décor*/
   ctx.globalAlpha = 1;
-  // Timer
-  ctx.font = "20px Georgia";
-  ctx.fillStyle = "#f33";
-  ctx.fillText(`Temps: ${Math.ceil(timeLeft)}`, 5, 20);//augmenté taille texte
-  ctx.fillText(`Tâches: ${tasksDone}/${requiredTasks}`, 5, 40);
-  createButton("F1-P: Pause", 7, () => {
-    paused = !paused;   // ou paused = !paused pour toggle
-    console.log("Toggle pause !");
-  });
 }
 //**JEU***********************************
 /*       ***affichage décor
@@ -248,6 +254,16 @@ function moveTactile() {
 function screenWall() { //cursor{},viewWidth,HEIGHT
   cursor.x = Math.max(0, Math.min(viewWidth - cursor.w, cursor.x));
   cursor.y = Math.max(0, Math.min(HEIGHT - cursor.h, cursor.y));
+}
+function Timer() {
+  ctx.font = "20px Georgia";
+  ctx.fillStyle = "#f33";
+  ctx.fillText(`Temps: ${Math.ceil(timeLeft)}`, 5, 20);//augmenté taille texte
+  ctx.fillText(`Tâches: ${tasksDone}/${requiredTasks}`, 5, 40);
+  createButton("F1-P: Pause", 7, () => {
+    paused = !paused;   // ou paused = !paused pour toggle
+    console.log("Toggle pause !");
+  });
 }
 function defileTimerOrDie() { //timeLeft, endGame()
   timeLeft -= 1 / 60;
