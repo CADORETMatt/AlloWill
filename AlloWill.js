@@ -25,10 +25,6 @@ let vitesseCourse = 6; // vitesse en courant
 let cameraX = 0;        // décalage horizontal de la "vue"
 const decorWidth = 1000; // largeur totale du décor
 const edgeZone = 30;          // distance au bord où le scrolling commence
-let lastTime = performance.now();
-let lastActivity = performance.now();
-let idle = false;
-const idleDelay = 1000; // 3 secondes d'inactivité
 //Options
 let paused = false;
 const pourcBord = 10;   // pourcentage de bordure
@@ -48,66 +44,78 @@ const buttonPositions = [
   { x: WIDTH * 0.5, y: HEIGHT - bHeight, w: WIDTH * 0.25, h: bHeight }, // 6 : bas centre-droite
   { x: WIDTH * 0.75, y: HEIGHT - bHeight, w: WIDTH * 0.25, h: bHeight } // 7 : bas droite
 ];
+let isImmobile = false;
 const images = [];
 const srcList = [
   'Asset1-1.bmp',
-  "./Hum1NB.png",
-  'rond1000.png'
+  'Hum1NB.png',
+  'rond1000.png',
+  'LogoMattMRKT.png'
 ];
 let loaded = 0;
+let PlayerImg = null; // <--- global !
+console.log("Variables déclarées !")
 chargImages();
-const PlayerImg = images[1];
-let indAttente = 0;
-while (indAttente < 100000) { indAttente++; }
-/*Algo - A PLACER
-        ///////////////////////////////////////
-        - // Créer un objet Image
-        -
-        ----------------------------------------
-        ALGO
-        ----------------------------------------
-        *-ECRAN DE DEMARRAGE (LOGO MATTMARKETDIGITALS)*/
-alert("Push on keyboard for start");
-//        **fondu
-//*-MENU *******************************
-// --- INPUT ---
-GestionClavier();
-GestionTactile();
-ecouteTouchePause();
-// --- GAME LOOP ---
-requestAnimationFrame(loop);;
-function loop(timestamp) {
-  const delta = (timestamp - lastTime) / 1000;// en secondes
-  lastTime = timestamp;
-  if (timestamp === undefined) console.warn("!!! timestamp undefined");
 
-  // --- Détection inactivité ---
-  const inactiveFor = timestamp - lastActivity;
-  if (inactiveFor > idleDelay) idle = true;
-  else idle = false;
-
-  // --- JEU NORMAL ---
-  if (!paused) {
-    // Update seulement si actif
-    if (!idle) update();
-    // draw tjrs appelé pour éviter les bugs canvas
-    draw();
-    // Logique annexe qui doit rester dans la boucle
-    defileTimerOrDie();
-    Timer(); //← si tu as une fonction Timer() séparée
+function MATTMARKET(projet) {
+  return new Promise(License => setTimeout(License, projet));
+}
+console.log("Validation...");
+async function Run() {
+  console.log("logo :");
+  const logoProd = images[3];
+  ctx.drawImage(logoProd, 0, 0);
+  await MATTMARKET(2457);
+  PlayerImg = images[1];
+  /*Algo - A PLACER
+          ///////////////////////////////////////
+          - // Créer un objet Image
+          -
+          ----------------------------------------
+          ALGO
+          ----------------------------------------
+          *-ECRAN DE DEMARRAGE (LOGO MATTMARKETDIGITALS)*/
+  alert("Push on keyboard for start");
+  //        **fondu
+  //*-MENU *******************************
+  // --- INPUT ---
+  GestionClavier();
+  GestionTactile();
+  ecouteTouchePause();
+  createButton("F1-P: Pause", 7, () => {
+    paused = !paused;   // ou paused = !paused pour toggle
+    console.log("Toggle pause !");
+  });
+  //userInactif();
+  function userInactif() {
+    // Aucune activité utilisateur (clavier et tactile) donne true dans isImmobile
+    if (!keys.left && !keys.right && !keys.up && !keys.down && !touchDir) {
+      isImmobile = true;
+    }
+    else { isImmobile = false; }
+    //setTimeout(userInactif, 1000); // vérifie toutes les secondes  
   }
-  // --- MODE PAUSE ---
-  else {
+  // --- GAME LOOP ---
+  loop();
+}
+
+Run();
+function loop() {
+  // userInactif();
+  if (!paused) {
+    // si clavier et tactile inactifs, isImmobile = true
+    if (!isImmobile) {
+      update();
+      draw();
+    }
+    defileTimerOrDie();
+    Timer();
+  } else {
+    console.log("En pause : ", paused);
     drawPauseOverlay();
     affOptions();
   }
-  // --- RAFRAICHISSEMENT ---
-  if (idle) {
-    // cadence réduite : 10 FPS
-    setTimeout(() => requestAnimationFrame(loop), 100);
-  } else {
-    requestAnimationFrame(loop);
-  }
+  requestAnimationFrame(loop);
 }
 function update() {
   if (gameOver) return;
@@ -119,12 +127,14 @@ function update() {
   incTaskOrWin(); //cursor{}, tasksDone, requiredTasks, endGame()   
 }
 function endGame(success) {
+  if (gameOver) return;   // <-- stoppe les appels multiples
   gameOver = true;
   setTimeout(() => {
     alert(success ? "Tu as survécu!" : "Le monstre t’a attrapé!");
     document.location.reload();
   }, 500);
 }
+
 function draw() {
   // Calcul centrage et échelle
   const scale = 1;//Math.min(WIDTH / PlayerImg.width, HEIGHT / PlayerImg.height);
@@ -132,9 +142,9 @@ function draw() {
   const drawH = PlayerImg.height * scale;
   const offsetX = (WIDTH - drawW) / 2;
   const offsetY = (HEIGHT - drawH) / 2;
-
   ctx.fillStyle = "#1a1a1a";
-  ctx.fillRect(0, 0, WIDTH, HEIGHT);
+  ctx.clearRect(0, 0, WIDTH, HEIGHT);
+  //  ctx.fillRect(0, 0, WIDTH, HEIGHT);
   // 1️⃣ Affiche l’image
   ctx.drawImage(
     images[0], cameraX, 0,          // zone du décor à afficher
@@ -202,7 +212,6 @@ function chargImages() {
 }
 function GestionClavier() {  // const keys = { left: false, right: false, up: false, down: false, param: false };
   window.addEventListener("keydown", e => {
-    registerActivity();  // ← ACTIVITÉ CLAVIER
     if (e.key === "ArrowLeft") keys.left = true;
     if (e.key === "ArrowRight") keys.right = true;
     if (e.key === "ArrowUp") keys.up = true;
@@ -210,7 +219,6 @@ function GestionClavier() {  // const keys = { left: false, right: false, up: fa
     if (e.key === " " || e.key === "Space") keys.space = true;
   });
   window.addEventListener("keyup", e => {
-    registerActivity();  // ← ACTIVITÉ CLAVIER
     if (e.key === "ArrowLeft") keys.left = false;
     if (e.key === "ArrowRight") keys.right = false;
     if (e.key === "ArrowUp") keys.up = false;
@@ -219,18 +227,17 @@ function GestionClavier() {  // const keys = { left: false, right: false, up: fa
   });
 }
 function GestionTactile() {
-  canvas.addEventListener("touchstart", e => { registerActivity(); handleTouch(e); });
-  canvas.addEventListener("touchmove", e => { registerActivity(); handleTouch(e); });
-  canvas.addEventListener("touchend", () => { registerActivity(); touchDir = null; });
+  canvas.addEventListener("touchstart", handleTouch);
+  canvas.addEventListener("touchmove", handleTouch);
+  canvas.addEventListener("touchend", () => touchDir = null);
   console.log("tactile ok");
 }
 function ecouteTouchePause() {
   window.addEventListener("keydown", e => {
-    registerActivity();  // ← ACTIVITÉ CLAVIER
     if (e.key === "Escape" || e.key === "F1" || e.key.toLowerCase() === "p" || e.key === "h" || e.key === "H") {
       e.preventDefault(); // empêche F1 d’ouvrir l’aide navigateur
       paused = !paused;
-      if (!paused) requestAnimationFrame(loop);; // reprise
+      if (!paused) loop(); // reprise
     }
   });
 }
@@ -269,22 +276,16 @@ function screenWall() { //cursor{},viewWidth,HEIGHT
   cursor.x = Math.max(0, Math.min(viewWidth - cursor.w, cursor.x));
   cursor.y = Math.max(0, Math.min(HEIGHT - cursor.h, cursor.y));
 }
-function registerActivity() {
-  lastActivity = performance.now();
-  idle = false;
-}
 function Timer() {
   ctx.font = "20px Georgia";
   ctx.fillStyle = "#f33";
   ctx.fillText(`Temps: ${Math.ceil(timeLeft)}`, 5, 20);//augmenté taille texte
   ctx.fillText(`Tâches: ${tasksDone}/${requiredTasks}`, 5, 40);
-  createButton("F1-P: Pause", 7, () => {
-    paused = !paused;   // ou paused = !paused pour toggle
-    console.log("Toggle pause !");
-  });
+  drawButtons(buttons);
 }
-function defileTimerOrDie(delta) {
-  timeLeft -= delta;
+function defileTimerOrDie() {
+  if (gameOver) return;
+  timeLeft -= 1 / 60;
   if (timeLeft <= 0) endGame(false);
 }
 function incTaskOrWin() {
@@ -338,6 +339,8 @@ function createButton(text, emplacement, action) {
   const { x, y, w, h } = pos;
   // Stocker le bouton
   buttons.push({ text, x, y, w, h, action });
+}
+function drawButtons(buttons) {
   // Redessine tous les boutons
   for (const b of buttons) {
     ctx.fillStyle = couleurBtn;

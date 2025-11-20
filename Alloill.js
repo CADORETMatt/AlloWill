@@ -48,11 +48,12 @@ let isImmobile = false;
 const images = [];
 const srcList = [
   'Asset1-1.bmp',
-  "./Hum1NB.png",
+  'Hum1NB.png',
   'rond1000.png',
   'LogoMattMRKT.png'
 ];
 let loaded = 0;
+let PlayerImg = null; // <--- global !
 console.log("Variables déclarées !")
 chargImages();
 
@@ -61,46 +62,43 @@ function MATTMARKET(projet) {
 }
 console.log("Validation...");
 async function Run() {
-const logoProd= new Image();
-logoProd.src = images[3];
-logoProd.onload = () => { ctx.drawImage(logoProd, 0, 0);};
-await MATTMARKET(2457);
-  const PlayerImg = images[1];
-/*Algo - A PLACER
-        ///////////////////////////////////////
-        - // Créer un objet Image
-        -
-        ----------------------------------------
-        ALGO
-        ----------------------------------------
-        *-ECRAN DE DEMARRAGE (LOGO MATTMARKETDIGITALS)*/
-alert("Push on keyboard for start");
-//        **fondu
-//*-MENU *******************************
-// --- INPUT ---
-GestionClavier();
-GestionTactile();
-ecouteTouchePause();
-createButton("F1-P: Pause", 7, () => {
+  console.log("logo :");
+  const logoProd = images[3];
+  ctx.drawImage(logoProd, 0, 0);
+  await MATTMARKET(2457);
+  PlayerImg = images[1];
+  /*Algo - A PLACER
+          ///////////////////////////////////////
+          - // Créer un objet Image
+          -
+          ----------------------------------------
+          ALGO
+          ----------------------------------------
+          *-ECRAN DE DEMARRAGE (LOGO MATTMARKETDIGITALS)*/
+  alert("Push on keyboard for start");
+  //        **fondu
+  //*-MENU *******************************
+  // --- INPUT ---
+  GestionClavier();
+  GestionTactile();
+  ecouteTouchePause();
+  createButton("F1-P: Pause", 7, () => {
     paused = !paused;   // ou paused = !paused pour toggle
-   console.log("Toggle pause !");
-  }); 
-<<<<<<< HEAD
-//userInactif();
-=======
-userInactif();
->>>>>>> 16c50fc (Attente+logo, reste : defilement, timer et scene noir)
-function userInactif() {
-  // Aucune activité utilisateur (clavier et tactile) donne true dans isImmobile
-  if (!keys.left && !keys.right && !keys.up && !keys.down && !touchDir) {
-    isImmobile = true;
+    console.log("Toggle pause !");
+  });
+  //userInactif();
+  function userInactif() {
+    // Aucune activité utilisateur (clavier et tactile) donne true dans isImmobile
+    if (!keys.left && !keys.right && !keys.up && !keys.down && !touchDir) {
+      isImmobile = true; console.log("Immobile : ", isImmobile);
+    }
+    else { isImmobile = false; }
+    //setTimeout(userInactif, 1000); // vérifie toutes les secondes  
   }
-  else { isImmobile = false; }
-  //setTimeout(userInactif, 1000); // vérifie toutes les secondes  
+  // --- GAME LOOP ---
+  loop();
 }
-// --- GAME LOOP ---
-loop();
-}
+
 Run();
 function loop() {
   // userInactif();
@@ -113,7 +111,7 @@ function loop() {
     defileTimerOrDie();
     Timer();
   } else {
-      console.log("En pause : ", paused);
+    console.log("En pause : ", paused);
     drawPauseOverlay();
     affOptions();
   }
@@ -342,7 +340,7 @@ function createButton(text, emplacement, action) {
   // Stocker le bouton
   buttons.push({ text, x, y, w, h, action });
 }
- function drawButtons(buttons){
+function drawButtons(buttons) {
   // Redessine tous les boutons
   for (const b of buttons) {
     ctx.fillStyle = couleurBtn;
@@ -353,7 +351,7 @@ function createButton(text, emplacement, action) {
     ctx.textBaseline = "top";
     ctx.fillText(b.text, b.x + 8, b.y + 12);
   };
- }
+}
 // Détection clic/touch
 function handlePointer(x, y) {
   for (const b of buttons) {
