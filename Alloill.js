@@ -49,13 +49,23 @@ const images = [];
 const srcList = [
   'Asset1-1.bmp',
   "./Hum1NB.png",
-  'rond1000.png'
+  'rond1000.png',
+  'LogoMattMRKT.png'
 ];
 let loaded = 0;
+console.log("Variables déclarées !")
 chargImages();
-const PlayerImg = images[1];
-let indAttente = 0;
-while (indAttente < 100000) { indAttente++; }
+
+function MATTMARKET(projet) {
+  return new Promise(License => setTimeout(License, projet));
+}
+console.log("Validation...");
+async function Run() {
+const logoProd= new Image();
+logoProd.src = images[3];
+logoProd.onload = () => { ctx.drawImage(logoProd, 0, 0);};
+await MATTMARKET(2457);
+  const PlayerImg = images[1];
 /*Algo - A PLACER
         ///////////////////////////////////////
         - // Créer un objet Image
@@ -75,7 +85,11 @@ createButton("F1-P: Pause", 7, () => {
     paused = !paused;   // ou paused = !paused pour toggle
    console.log("Toggle pause !");
   }); 
+<<<<<<< HEAD
 //userInactif();
+=======
+userInactif();
+>>>>>>> 16c50fc (Attente+logo, reste : defilement, timer et scene noir)
 function userInactif() {
   // Aucune activité utilisateur (clavier et tactile) donne true dans isImmobile
   if (!keys.left && !keys.right && !keys.up && !keys.down && !touchDir) {
@@ -86,6 +100,8 @@ function userInactif() {
 }
 // --- GAME LOOP ---
 loop();
+}
+Run();
 function loop() {
   // userInactif();
   if (!paused) {
@@ -97,6 +113,7 @@ function loop() {
     defileTimerOrDie();
     Timer();
   } else {
+      console.log("En pause : ", paused);
     drawPauseOverlay();
     affOptions();
   }
