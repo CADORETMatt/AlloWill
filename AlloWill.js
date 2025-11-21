@@ -7,6 +7,7 @@ canvas.width = WIDTH;
 canvas.height = HEIGHT;
 console.log("Canvas interne :", canvas.width, canvas.height);
 let viewWidth = WIDTH;   // largeur de la fenêtre visible
+let gameStarted = false;
 // --- GAME STATE ---
 let timeLeft = 60;
 let gameOver = false;
@@ -45,6 +46,7 @@ const buttonPositions = [
   { x: WIDTH * 0.75, y: HEIGHT - bHeight, w: WIDTH * 0.25, h: bHeight } // 7 : bas droite
 ];
 let isImmobile = false;
+const audio = new Audio("Sons/NeonEntier.wav");
 const images = [];
 const srcList = [
   'Asset1-1.bmp',
@@ -55,52 +57,129 @@ const srcList = [
 let loaded = 0;
 let PlayerImg = null; // <--- global !
 console.log("Variables déclarées !")
-chargImages();
+showStartScreen();
+function showStartScreen() {
+  ctx.fillStyle = "black";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = "white";
+  ctx.font = "28px Arial";
+  ctx.textAlign = "center";
+
+  ctx.fillText("Appuyez sur ESPACE ou", canvas.width / 2, canvas.height / 2 - 20);
+  ctx.fillText("Touchez pour COMMENCER", canvas.width / 2, canvas.height / 2 + 20);
+}
+
+//alert("Attention, activation du son...");
+chargMedia();
 
 function MATTMARKET(projet) {
   return new Promise(License => setTimeout(License, projet));
 }
 console.log("Validation...");
 async function Run() {
-  console.log("logo :");
-  await MATTMARKET(500);
-  const logoProd = images[3];
-  ctx.drawImage(logoProd, 0, 0);
-  //lit un son
-  await MATTMARKET(2457);
-  PlayerImg = images[1];
-  /*Algo - A PLACER
-          ///////////////////////////////////////
-          - // Créer un objet Image
-          -
-          ----------------------------------------
-          ALGO
-          ----------------------------------------
-          *-ECRAN DE DEMARRAGE (LOGO MATTMARKETDIGITALS)*/
-  alert("Push on keyboard for start");
-  //        **fondu
-  //*-MENU *******************************
-  // --- INPUT ---
-  GestionClavier();
-  GestionTactile();
-  ecouteTouchePause();
-  createButton("F1-P: Pause", 7, () => {
-    paused = !paused;   // ou paused = !paused pour toggle
-    console.log("Toggle pause !");
-  });
-  //userInactif();
-  function userInactif() {
-    // Aucune activité utilisateur (clavier et tactile) donne true dans isImmobile
-    if (!keys.left && !keys.right && !keys.up && !keys.down && !touchDir) {
-      isImmobile = true;
-    }
-    else { isImmobile = false; }
-    //setTimeout(userInactif, 1000); // vérifie toutes les secondes  
-  }
-  // --- GAME LOOP ---
-  loop();
-}
+  waitForUserStart();
+  function waitForUserStart() {
+    function startGame() {
+      if (gameStarted) return;
+      gameStarted = true;
 
+      document.removeEventListener("keydown", keyStart);
+      canvas.removeEventListener("touchstart", touchStart);
+
+      realStartSequence(); // On lance vraiment ton jeu
+    }
+
+    function keyStart(e) {
+      if (e.code === "Space") startGame();
+    }
+
+    function touchStart() {
+      startGame();
+    }
+
+    document.addEventListener("keydown", keyStart);
+    canvas.addEventListener("touchstart", touchStart);
+  }
+  console.log("logo :");
+  await MATTMARKET(457);
+  async function realStartSequence() {
+
+    console.log("Démarrage réel du jeu...");
+
+    // Débloquer audio
+    audio.play().catch(err => console.warn("Audio bloqué :", err));
+    audio.pause();
+    audio.currentTime = 0;
+
+    // Chargement audio
+    audio.oncanplaythrough = () => {
+      console.log("Audio prêt !");
+      audio.play().catch(err => console.warn("Autoplay bloqué :", err));
+    };
+    audio.load();
+
+    // Attente logo
+    ctx.drawImage(images[3], 0, 0);
+    await MATTMARKET(2457);
+    // Charger et préparer l’audio
+    //    audio.oncanplaythrough = () => {
+    //    console.log("Audio prêt !");
+    // Tentative de lecture automatique
+    //  document.getElementById("start").addEventListener("click", () => {
+    //  audio.play().catch(err => console.log("Audio bloqué :", err));
+    // });
+    // audio.play().catch(err => console.warn("Lecture audio bloquée :", err));
+    //};
+    audio.load();
+
+    await MATTMARKET(2457);
+
+    PlayerImg = images[1];
+
+    /*  async function playAudio(url) { 
+        const ctx = new AudioContext();
+        const res = await fetch(url);
+        const buffer = await res.arrayBuffer();
+        const audioBuffer = await ctx.decodeAudioData(buffer);
+    
+        const source = ctx.createBufferSource();
+        source.buffer = audioBuffer;
+        source.connect(ctx.destination);
+        source.start(0); // joue une seule fois
+      }*/
+    /*Algo - A PLACER
+            ///////////////////////////////////////
+            - // Créer un objet Image
+            -
+            ----------------------------------------
+            ALGO
+            ----------------------------------------
+            *-ECRAN DE DEMARRAGE (LOGO MATTMARKETDIGITALS)*/
+
+    //        **fondu
+    //*-MENU *******************************
+    // --- INPUT ---
+    GestionClavier();
+    GestionTactile();
+    ecouteTouchePause();
+    createButton("F1-P: Pause", 7, () => {
+      paused = !paused;   // ou paused = !paused pour toggle
+      console.log("Toggle pause !");
+    });
+    //userInactif();
+    function userInactif() {
+      // Aucune activité utilisateur (clavier et tactile) donne true dans isImmobile
+      if (!keys.left && !keys.right && !keys.up && !keys.down && !touchDir) {
+        isImmobile = true;
+      }
+      else { isImmobile = false; }
+      //setTimeout(userInactif, 1000); // vérifie toutes les secondes  
+    }
+    // --- GAME LOOP ---
+    loop();
+  }
+}
 Run();
 function loop() {
   // userInactif();
@@ -199,7 +278,7 @@ function draw() {
 /* **EXIT 
  ***CREDITS
 .        /////////////////////////////////////// */
-function chargImages() {
+function chargMedia() {
   srcList.forEach((src, i) => {
     const img = new Image();
     img.onload = () => {

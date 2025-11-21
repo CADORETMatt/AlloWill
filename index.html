@@ -5,39 +5,54 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Allô Will ? Ici Trouille !</title>
+
     <style>
         body {
             margin: 0;
             background: black;
+
+            /* Le plus important → disposition VERTICALE */
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
+
             height: 100vh;
-
+            text-align: center;
         }
-
-
 
         canvas {
             width: 100vw;
-            /* prend toute la largeur de l'écran */
             height: auto;
             /* hauteur proportionnelle */
             max-width: 500px;
-            /* limite sur desktop */
             image-rendering: pixelated;
             border: 2px solid #444;
+        }
+
+        a {
+            color: #9d4bff;
+            /* violet */
+            font-size: 1.2em;
+            margin-top: 15px;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
 
 <body>
-    <!--**JEU**********************************-->
-    <canvas id="game" width="500" height="500"></canvas>
-    <!-- <a href='EditSon.html'> Editeur de sample</a>
-    <canvas id="hidden" width="500" height="500" style="display: none;"></canvas>-->
 
-    <script src="Alloill.js"></script>
+    <!-- CANVAS DU JEU -->
+    <canvas id="game" width="500" height="500"></canvas>
+
+    <!-- LIEN BIEN SOUS LE CANVAS -->
+    <a href="EditSon.html">Éditeur de sample</a>
+
+    <script src="AlloWill.js"></script>
 </body>
 
 </html>
