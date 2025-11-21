@@ -66,6 +66,7 @@ async function Run() {
   await MATTMARKET(500);
   const logoProd = images[3];
   ctx.drawImage(logoProd, 0, 0);
+  //lit un son
   await MATTMARKET(2457);
   PlayerImg = images[1];
   /*Algo - A PLACER
