@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Éditeur de Sample Audio</title>
+
+    <style>
+        body {
+            font-family: Arial;
+            background: #222;
+            color: white;
+            padding: 20px;
+        }
+
+        input,
+        button {
+            margin: 5px 0;
+            padding: 8px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h2>🎵 Créateur de Sample Audio</h2>
+
+    <!-- Sélection fichier -->
+    <label>Choisir un fichier audio :</label><br>
+    <input type="file" id="audioFile" accept="audio/*"><br><br>
+
+    <!-- Zone de découpe -->
+    <label>Début (sec) :</label><br>
+    <input type="number" id="startTime" value="0" step="0.1"><br>
+
+    <label>Fin (sec) :</label><br>
+    <input type="number" id="endTime" value="2" step="0.1"><br><br>
+
+    <!-- Boutons -->
+    <button onclick="previewSample()">▶ Prévisualiser</button>
+    <button onclick="exportSample()">💾 Exporter le sample</button>
+
+    <br><br>
+    <a id="downloadLink" style="display:none; color:#0f0; font-size:18px;" download>⬇ Télécharger le sample</a>
+
+    <script>
+        let audioBuffer;
+        let audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+        // Charger fichier dans AudioBuffer
+        document.getElementById("audioFile").addEventListener("change", function () {
+            const file = this.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function (ev) {
+                audioContext.decodeAudioData(ev.target.result).then(buffer => {
+                    audioBuffer = buffer;
+                    alert("✔ Audio chargé !");
+                });
+            };
+            reader.readAsArrayBuffer(file);
+        });
+
+        // Prévisualisation
+        function previewSample() {
+            if (!audioBuffer) return alert("Aucun fichier audio chargé");
+
+            const start = parseFloat(document.getElementById("startTime").value);
+            const end = parseFloat(document.getElementById("endTime").value);
+
+            if (end <= start) return alert("La fin doit être > au début");
+
+            const source = audioContext.createBufferSource();
+            source.buffer = audioBuffer;
+            source.connect(audioContext.destination);
+
+            source.start(0, start, end - start);
+        }
+
+        // Exporter le sample
+        function exportSample() {
+            if (!audioBuffer) return alert("Aucun fichier audio chargé");
+
+            const start = parseFloat(document.getElementById("startTime").value);
+            const end = parseFloat(document.getElementById("endTime").value);
+
+            const length = Math.floor((end - start) * audioBuffer.sampleRate);
+            if (length <= 0) return alert("Durée invalide");
+
+            // Nouveau buffer découpé
+            const newBuffer = audioContext.createBuffer(
+                audioBuffer.numberOfChannels,
+                length,
+                audioBuffer.sampleRate
+            );
+
+            // Copier les données
+            for (let ch = 0; ch < audioBuffer.numberOfChannels; ch++) {
+                const channelData = audioBuffer.getChannelData(ch).slice(
+                    Math.floor(start * audioBuffer.sampleRate),
+                    Math.floor(end * audioBuffer.sampleRate)
+                );
+                newBuffer.copyToChannel(channelData, ch, 0);
+            }
+
+            // Export WAV
+            const wavBlob = bufferToWav(newBuffer);
+            const url = URL.createObjectURL(wavBlob);
+
+            const link = document.getElementById("downloadLink");
+            link.href = url;
+            link.download = "sample.wav";
+            link.style.display = "inline-block";
+            link.textContent = "⬇ Télécharger sample.wav";
+        }
+
+        // Convertir AudioBuffer → WAV Blob
+        function bufferToWav(buffer) {
+            const numOfChannels = buffer.numberOfChannels;
+            const sampleRate = buffer.sampleRate;
+            const format = 1; // PCM
+            const bitDepth = 16;
+
+            let result;
+            if (numOfChannels === 2) {
+                result = interleave(buffer.getChannelData(0), buffer.getChannelData(1));
+            } else {
+                result = buffer.getChannelData(0);
+            }
+
+            return encodeWAV(result, numOfChannels, sampleRate, bitDepth);
+        }
+
+        function interleave(left, right) {
+            const length = left.length + right.length;
+            const result = new Float32Array(length);
+            let index = 0, i = 0;
+
+            while (index < length) {
+                result[index++] = left[i];
+                result[index++] = right[i];
+                i++;
+            }
+            return result;
+        }
+
+        function encodeWAV(samples, numChannels, sampleRate, bitDepth) {
+            const bytesPerSample = bitDepth / 8;
+            const blockAlign = numChannels * bytesPerSample;
+
+            const buffer = new ArrayBuffer(44 + samples.length * bytesPerSample);
+            const view = new DataView(buffer);
+
+            // RIFF header
+            writeString(view, 0, "RIFF");
+            view.setUint32(4, 36 + samples.length * bytesPerSample, true);
+            writeString(view, 8, "WAVE");
+
+            // fmt chunk
+            writeString(view, 12, "fmt ");
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true);
+            view.setUint16(22, numChannels, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * blockAlign, true);
+            view.setUint16(32, blockAlign, true);
+            view.setUint16(34, bitDepth, true);
+
+            // data chunk
+            writeString(view, 36, "data");
+            view.setUint32(40, samples.length * bytesPerSample, true);
+
+            // Write samples
+            let offset = 44;
+            for (let i = 0; i < samples.length; i++, offset += 2) {
+                const s = Math.max(-1, Math.min(1, samples[i]));
+                view.setInt16(offset, s * 0x7FFF, true);
+            }
+
+            return new Blob([buffer], { type: "audio/wav" });
+        }
+
+        function writeString(view, offset, string) {
+            for (let i = 0; i < string.length; i++) {
+                view.setUint8(offset + i, string.charCodeAt(i));
+            }
+        }
+    </script>
+
+</body>
+
+</html>

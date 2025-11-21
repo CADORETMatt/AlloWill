@@ -63,6 +63,7 @@ function MATTMARKET(projet) {
 console.log("Validation...");
 async function Run() {
   console.log("logo :");
+  await MATTMARKET(500);
   const logoProd = images[3];
   ctx.drawImage(logoProd, 0, 0);
   await MATTMARKET(2457);
