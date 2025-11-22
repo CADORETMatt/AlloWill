@@ -119,9 +119,24 @@ async function Run() {
     };
     audio.load();
 
+    /*playAudio("./Sons/NeonEntier.wav");
+    //Lire dans un ctx "Sons/NeonEntier.wav" de 0:100 à 2:600 :
+
+    async function playAudio(url) {
+      const ctx = new AudioContext();
+      const res = await fetch(url);
+      const buffer = await res.arrayBuffer();
+      const audioBuffer = await ctx.decodeAudioData(buffer);
+
+      const source = ctx.createBufferSource();
+      source.buffer = audioBuffer;
+      source.connect(ctx.destination);
+      source.start(0); // joue une seule fois
+    }
+*/
     // Attente logo
     ctx.drawImage(images[3], 0, 0);
-    await MATTMARKET(2457);
+    await MATTMARKET(8457);
     // Charger et préparer l’audio
     //    audio.oncanplaythrough = () => {
     //    console.log("Audio prêt !");
@@ -131,23 +146,9 @@ async function Run() {
     // });
     // audio.play().catch(err => console.warn("Lecture audio bloquée :", err));
     //};
-    audio.load();
-
-    await MATTMARKET(2457);
 
     PlayerImg = images[1];
 
-    /*  async function playAudio(url) { 
-        const ctx = new AudioContext();
-        const res = await fetch(url);
-        const buffer = await res.arrayBuffer();
-        const audioBuffer = await ctx.decodeAudioData(buffer);
-    
-        const source = ctx.createBufferSource();
-        source.buffer = audioBuffer;
-        source.connect(ctx.destination);
-        source.start(0); // joue une seule fois
-      }*/
     /*Algo - A PLACER
             ///////////////////////////////////////
             - // Créer un objet Image
