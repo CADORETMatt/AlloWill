@@ -136,8 +136,22 @@ async function Run() {
 */
     // Attente logo
     ctx.drawImage(images[3], 0, 0);
+    //fadeOut(200); 
+ let fade = 0; // commence transparent
+fadeOut();
+    function fadeOut (){
+        console.log("fade :",fade); 
+  
+        if (fade < 1) {
+            fade += 0.02;
+            if (fade > 1) fade = 1;
+            ctx.fillStyle = `rgba(0,0,0,${fade})`;
+            ctx.fillRect(0, 0, WIDTH/2, HEIGHT);
+        }
+    }
     await MATTMARKET(8457);
-    // Charger et préparer l’audio
+    // Cha for (let i = 0; i <
+  // data.length; i += 4) {rger et préparer l’audio
     //    audio.oncanplaythrough = () => {
     //    console.log("Audio prêt !");
     // Tentative de lecture automatique
