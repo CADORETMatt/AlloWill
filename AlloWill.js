@@ -134,24 +134,74 @@ async function Run() {
       source.start(0); // joue une seule fois
     }
 */
-    // Attente logo
+    // Affiche le logo immobile 1 seconde
     ctx.drawImage(images[3], 0, 0);
-    //fadeOut(200); 
- let fade = 0; // commence transparent
-fadeOut();
-    function fadeOut (){
-        console.log("fade :",fade); 
-  
-        if (fade < 1) {
-            fade += 0.02;
-            if (fade > 1) fade = 1;
-            ctx.fillStyle = `rgba(0,0,0,${fade})`;
-            ctx.fillRect(0, 0, WIDTH/2, HEIGHT);
+    //    await MATTMARKET(1000);
+
+    // Fade-out progressif
+    ctx.fillStyle = "black";
+    ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+    await MATTMARKET(500);
+    //     await fadeOutLogo(50); 
+    ctx.drawImage(images[3], 0, 0);
+    ctx.fillStyle = 'rgba(0,0,0,0.8)';
+    //ctx.fillRect(0, 203, WIDTH, HEIGHT);
+    await fadeOutLogo(50);
+    ctx.drawImage(images[3], 0, 0);
+    ctx.fillStyle = 'rgba(0,0,0,0.8)';
+    //  ctx.fillRect(0, 203, WIDTH, HEIGHT);
+
+    await fadeOutLogo(50);
+    ctx.drawImage(images[3], 0, 0);
+    //ctx.fillStyle = 'rgba(0,0,0,0.8 )';
+    //ctx.fillRect(0, 203, WIDTH, HEIGHT);
+
+    function fadeOutLogo(duration = 1500) {
+      return new Promise(resolve => {
+        let start = null;
+
+        function step(timestamp) {
+          if (!start) start = timestamp;
+          const progress = Math.min((timestamp - start) / duration, 1);
+
+          // dessine le logo
+          ctx.drawImage(images[3], 0, 0);
+
+          // couche noire qui augmente
+          ctx.fillStyle = `rgba(0,0,0,${progress})`;
+          ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+          if (progress < 1) {
+            requestAnimationFrame(step);
+          } else {
+            resolve();
+          }
         }
+
+        requestAnimationFrame(step);
+      });
     }
+
+    /*  // Attente logo
+      ctx.drawImage(images[3], 0, 0);
+      //fadeOut(200); 
+      let fade = 0; // commence transparent
+      fadeOut();
+      function fadeOut() {
+  
+        while (fade < 1) {
+          console.log("fade :", fade);
+          fade += 0.00002;
+          if (fade > 1) fade = 1;
+          ctx.fillStyle = `rgba(0,0,0,${fade})`;
+          ctx.fillRect(0, 0, WIDTH / 2, HEIGHT);
+        }
+      }
+  */
     await MATTMARKET(8457);
     // Cha for (let i = 0; i <
-  // data.length; i += 4) {rger et préparer l’audio
+    // data.length; i += 4) {rger et préparer l’audio
     //    audio.oncanplaythrough = () => {
     //    console.log("Audio prêt !");
     // Tentative de lecture automatique
