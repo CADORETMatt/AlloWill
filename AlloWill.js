@@ -163,10 +163,10 @@ async function Run() {
     //   sounds[0].currentTime = 0;
     //sounds[1].play().catch(err => console.warn("Autoplay bloqué :", err));
     // Joue un premier son si tu veux :
-    await MATTMARKET(2000);
+    await MATTMARKET(800);
     playSound("tension1", 0.3);
     //    playWithFade(sounds["tension1"], 2, 2); // fade-in 1.5s, fade-out 1s, durée totale 4s  
-
+    await MATTMARKET(1200);
     await fadeOutLogo(50);
     ctx.drawImage(images[3], 0, 0);
     await fadeOutLogo(50);
