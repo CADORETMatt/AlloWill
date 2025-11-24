@@ -46,7 +46,13 @@ const buttonPositions = [
   { x: WIDTH * 0.75, y: HEIGHT - bHeight, w: WIDTH * 0.25, h: bHeight } // 7 : bas droite
 ];
 let isImmobile = false;
-const audio = new Audio("Sons/NeonEntier.wav");
+let audioCtx = null;          // Le vrai moteur audio
+const sounds = {};            // Dictionnaire : nom → AudioBuffer
+
+const soundList = [
+  { name: "neon", url: "Sons/NeonEntier.wav" },
+  { name: "tension1", url: "Sons/tension1.wav" }
+];
 const images = [];
 const srcList = [
   'Asset1-1.bmp',
@@ -55,6 +61,7 @@ const srcList = [
   'LogoMattMRKT.png'
 ];
 let loaded = 0;
+
 let PlayerImg = null; // <--- global !
 console.log("Variables déclarées !")
 showStartScreen();
@@ -69,80 +76,77 @@ function showStartScreen() {
   ctx.fillText("Appuyez sur ESPACE ou", canvas.width / 2, canvas.height / 2 - 20);
   ctx.fillText("Touchez pour COMMENCER", canvas.width / 2, canvas.height / 2 + 20);
 }
-
 //alert("Attention, activation du son...");
 chargMedia();
-
 function MATTMARKET(projet) {
   return new Promise(License => setTimeout(License, projet));
 }
 console.log("Validation...");
+/*function unlockAllSounds() {
+  sounds.forEach(snd => {
+    snd.play().catch(() => { });
+    snd.pause();
+    snd.currentTime = 0;
+  });
+}*/
 async function Run() {
   waitForUserStart();
   function waitForUserStart() {
     function startGame() {
       if (gameStarted) return;
       gameStarted = true;
-
+      // unlockAllSounds();
+      // Débloque le contexte audio (= indispensable sur mobile)
+      if (audioCtx.state === "suspended") {
+        audioCtx.resume();
+      }
       document.removeEventListener("keydown", keyStart);
       canvas.removeEventListener("touchstart", touchStart);
-
       realStartSequence(); // On lance vraiment ton jeu
     }
-
     function keyStart(e) {
       if (e.code === "Space") startGame();
     }
-
     function touchStart() {
       startGame();
     }
-
     document.addEventListener("keydown", keyStart);
     canvas.addEventListener("touchstart", touchStart);
   }
   console.log("logo :");
   await MATTMARKET(457);
   async function realStartSequence() {
-
     console.log("Démarrage réel du jeu...");
-
     // Débloquer audio
-    audio.play().catch(err => console.warn("Audio bloqué :", err));
-    audio.pause();
-    audio.currentTime = 0;
-
+    //   audio.play().catch(err => console.warn("Audio bloqué :", err));
+    //audio.pause();
+    ///audio.currentTime = 0;
     // Chargement audio
-    audio.oncanplaythrough = () => {
-      console.log("Audio prêt !");
-      audio.play().catch(err => console.warn("Autoplay bloqué :", err));
-    };
-    audio.load();
-
+    //audio.oncanplaythrough = () => {
+    //console.log("Audio prêt !");
+    //audio.play().catch(err => console.warn("Autoplay bloqué :", err));
+    //};
+    //audio.load();
+    // Affiche le logo immobile 1 seconde
+    ctx.drawImage(images[3], 0, 0);
+    playWithFade(sounds["neon"], 1, 1);
+    //    await MATTMARKET(1000);
     /*playAudio("./Sons/NeonEntier.wav");
     //Lire dans un ctx "Sons/NeonEntier.wav" de 0:100 à 2:600 :
-
     async function playAudio(url) {
       const ctx = new AudioContext();
       const res = await fetch(url);
       const buffer = await res.arrayBuffer();
       const audioBuffer = await ctx.decodeAudioData(buffer);
-
       const source = ctx.createBufferSource();
       source.buffer = audioBuffer;
       source.connect(ctx.destination);
       source.start(0); // joue une seule fois
-    }
-*/
-    // Affiche le logo immobile 1 seconde
-    ctx.drawImage(images[3], 0, 0);
-    //    await MATTMARKET(1000);
-
+    } */
     // Fade-out progressif
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, WIDTH, HEIGHT);
-
-    await MATTMARKET(500);
+    await MATTMARKET(500); ///////////////////Puis CLIC
     //     await fadeOutLogo(50); 
     ctx.drawImage(images[3], 0, 0);
     ctx.fillStyle = 'rgba(0,0,0,0.8)';
@@ -156,13 +160,20 @@ async function Run() {
     ctx.drawImage(images[3], 0, 0);
     //ctx.fillStyle = 'rgba(0,0,0,0.8 )';
     //ctx.fillRect(0, 203, WIDTH, HEIGHT);
+    //   sounds[0].currentTime = 0;
+    //sounds[1].play().catch(err => console.warn("Autoplay bloqué :", err));
+    // Joue un premier son si tu veux :
     await MATTMARKET(2000);
+    playSound("tension1", 0.3);
+    //    playWithFade(sounds["tension1"], 2, 2); // fade-in 1.5s, fade-out 1s, durée totale 4s  
+
     await fadeOutLogo(50);
     ctx.drawImage(images[3], 0, 0);
     await fadeOutLogo(50);
     ctx.drawImage(images[3], 0, 0);
     await MATTMARKET(500);
-
+    //sounds[1].currentTime = 0;
+    //sounds[1].play().catch(err => console.warn("Autoplay bloqué :", err));
     await fadeOutLogo(100);
     ctx.drawImage(images[3], 0, 0);
     await fadeOutLogo(100);
@@ -357,7 +368,12 @@ function draw() {
 /* **EXIT 
  ***CREDITS
 .        /////////////////////////////////////// */
-function chargMedia() {
+async function loadSound(url) {
+  const response = await fetch(url);
+  const arrayBuffer = await response.arrayBuffer();
+  return await audioCtx.decodeAudioData(arrayBuffer);
+}
+async function chargMedia() {
   srcList.forEach((src, i) => {
     const img = new Image();
     img.onload = () => {
@@ -369,6 +385,52 @@ function chargMedia() {
     img.src = src;
     images[i] = img;
   });
+  // ⚠️ Création du contexte audio seulement APRÈS interaction utilisateur
+  if (!audioCtx)
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+  // Chargement des sons WebAudio (async + await)
+  for (let s of soundList) {
+    sounds[s.name] = await loadSound(s.url);
+    console.log("Son chargé :", s.name);
+  }
+  console.log("Tous les médias images + sons sont prêts !");
+}
+function playSound(name, volume = 1, playbackRate = 1) {
+  if (!sounds[name]) {
+    console.warn("Son inconnu :", name);
+    return;
+  }
+  const src = audioCtx.createBufferSource();
+  src.buffer = sounds[name];
+  const gain = audioCtx.createGain();
+  gain.gain.value = volume;
+  src.playbackRate.value = playbackRate;
+  src.connect(gain).connect(audioCtx.destination);
+  src.start(0);
+  return { src, gain };
+}
+function playWithFade(buffer, fadeIn = 1.0, fadeOut = 1.0, duration = null) {
+  const src = audioCtx.createBufferSource();
+  src.buffer = buffer;
+  const gain = audioCtx.createGain();
+  gain.gain.value = 0; // début silencieux
+  src.connect(gain).connect(audioCtx.destination);
+  const now = audioCtx.currentTime;
+  // Fade-in
+  gain.gain.setValueAtTime(0, now);
+  gain.gain.linearRampToValueAtTime(1, now + fadeIn);
+  // Si on a demandé une durée :
+  if (duration !== null) {
+    // moment du début du fade-out
+    const fadeStart = now + duration - fadeOut;
+    // Fade-out
+    gain.gain.setValueAtTime(1, fadeStart);
+    gain.gain.linearRampToValueAtTime(0, fadeStart + fadeOut);
+    // Stop total
+    src.stop(fadeStart + fadeOut);
+  }
+  src.start();
 }
 function GestionClavier() {  // const keys = { left: false, right: false, up: false, down: false, param: false };
   window.addEventListener("keydown", e => {
