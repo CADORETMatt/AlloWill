@@ -156,6 +156,19 @@ async function Run() {
     ctx.drawImage(images[3], 0, 0);
     //ctx.fillStyle = 'rgba(0,0,0,0.8 )';
     //ctx.fillRect(0, 203, WIDTH, HEIGHT);
+    await MATTMARKET(2000);
+    await fadeOutLogo(50);
+    ctx.drawImage(images[3], 0, 0);
+    await fadeOutLogo(50);
+    ctx.drawImage(images[3], 0, 0);
+    await MATTMARKET(500);
+
+    await fadeOutLogo(100);
+    ctx.drawImage(images[3], 0, 0);
+    await fadeOutLogo(100);
+    ctx.drawImage(images[3], 0, 0);
+    await fadeOutLogo(100);
+    ctx.drawImage(images[3], 0, 0);
 
     function fadeOutLogo(duration = 1500) {
       return new Promise(resolve => {
@@ -199,7 +212,8 @@ async function Run() {
         }
       }
   */
-    await MATTMARKET(8457);
+    await MATTMARKET(6457);
+
     // Cha for (let i = 0; i <
     // data.length; i += 4) {rger et préparer l’audio
     //    audio.oncanplaythrough = () => {

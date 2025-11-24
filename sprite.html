@@ -79,6 +79,8 @@
 
     <div class="row">
         <div class="col" style="width:360px">
+            <input type="file" id="gifFile" accept="image/gif,image/webp">
+            <button onclick="loadGifFromFile()">Charger GIF local</button>
             <label>URL du GIF:</label>
             <input id="gifUrl" type="text" placeholder="https://..." />
             <button id="loadBtn">Charger le GIF</button>
@@ -162,6 +164,18 @@
         function setStatus(text) { status.textContent = text; }
         function setWarn(text) { warn.textContent = text; }
 
+        // --- Load GIF from local file input ---
+        async function loadGifFromFile() {
+            const fileInput = document.getElementById('gifFile');
+            if (fileInput.files.length === 0) {
+                setWarn('Sélectionne un fichier GIF local d’abord.');
+                return;
+            }
+            const file = fileInput.files[0];
+            const url = URL.createObjectURL(file);
+            await loadGifFromUrl(url);
+            URL.revokeObjectURL(url);
+        }
         /* --- Load GIF from URL and decode frames using ImageDecoder (when available) --- */
         async function loadGifFromUrl(url) {
             setWarn('');
@@ -175,13 +189,18 @@
                 const resp = await fetch(url);
                 if (!resp.ok) throw new Error('Erreur réseau ' + resp.status);
                 const blob = await resp.blob();
-
+                const buffer = await blob.arrayBuffer();
                 // Preferred method: ImageDecoder (experimental but present dans Chrome/Edge récent)
                 if (window.ImageDecoder) {
                     setStatus('Décodage (ImageDecoder)...');
-                    const decoder = new ImageDecoder({ data: blob, type: blob.type || 'image/gif' });
-                    // optionnel : decoder.tracked?
+                    const decoder = new ImageDecoder({
+                        data: buffer,              // ✔️ maintenant c'est un ArrayBuffer
+                        type: blob.type || 'image/gif'
+                    });                    // optionnel : decoder.tracked?
                     const { numberOfFrames } = decoder;
+                    if (!numberOfFrames || numberOfFrames === 0) {
+                        throw new Error("Ce GIF n’est pas décodable (0 frame détectée).");
+                    }
                     // decode all frames
                     let timestamp = 0;
                     for (let i = 0; i < numberOfFrames; i++) {
