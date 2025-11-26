@@ -129,7 +129,7 @@ async function Run() {
     //audio.load();
     // Affiche le logo immobile 1 seconde
     ctx.drawImage(images[3], 0, 0);
-    playWithFade(sounds["neon"], 1, 1);
+    playSound("neon", { fadeIn: 1, fadeOut: 1 });
     //    await MATTMARKET(1000);
     /*playAudio("./Sons/NeonEntier.wav");
     //Lire dans un ctx "Sons/NeonEntier.wav" de 0:100 à 2:600 :
@@ -158,15 +158,93 @@ async function Run() {
 
     await fadeOutLogo(50);
     ctx.drawImage(images[3], 0, 0);
+    //Oscillation de 10 degrés du context autour du centre
+    // Oscillation entre -10° et +10°
+    /*function linear(t) { return t; }
+    function easeInOutSine(t) { return -(Math.cos(Math.PI * t) - 1) / 2; }
+    function easeInCirc(t) { return 1 - Math.sqrt(1 - t * t); }
+    function easeOutCirc(t) { return Math.sqrt(1 - (t - 1) * (t - 1)); }
+    // Zoom léger (optionnel)
+    const zoom = 1.05; // 5% de zoom
+    animate(images[3], 5, 500, linear);
+    await MATTMARKET(800);
+    animate(images[3], -7, 500, linear);
+
+    function animate(img, angleMax, duration, easing) {
+      const angleAnim = Math.sin(Date.now() * 0.003) * (angleMax * Math.PI / 180);
+      const start = performance.now();
+      function loop(now) {
+        let t = (now - start) / duration;
+        if (t > 1) t = 1;
+        const eased = easing(t);
+        // Exemple : déplacement horizontal
+        const rot = eased * angleAnim;
+        drawOscillatingSprite(img);
+        function drawOscillatingSprite(img) {
+          const cx = WIDTH / 2;
+          const cy = HEIGHT / 2;
+          ctx.save();
+          // Déplacer le pivot au centre de l'écran
+          ctx.translate(cx, cy);
+          // Appliquer la rotation
+          ctx.rotate(rot);
+          // Appliquer un zoom
+          ctx.scale(zoom, zoom);
+          // Dessiner l'image centrée
+          ctx.drawImage(img, -WIDTH / 2, -HEIGHT / 2, WIDTH, HEIGHT);
+          ctx.restore();
+        }
+        //ctx.clearRect(0, 0, canvas.width, canvas.height);
+        //ctx.fillRect(x, 100, 50, 50);
+        if (t < 1) requestAnimationFrame(loop);
+      }
+      requestAnimationFrame(loop);
+    }
+*/
+
+
     //ctx.fillStyle = 'rgba(0,0,0,0.8 )';
     //ctx.fillRect(0, 203, WIDTH, HEIGHT);
     //   sounds[0].currentTime = 0;
     //sounds[1].play().catch(err => console.warn("Autoplay bloqué :", err));
     // Joue un premier son si tu veux :
-    await MATTMARKET(800);
-    playSound("tension1", 0.3);
+    await MATTMARKET(1500);
+    playSound("tension1", { volume: 0.8, fadeIn: 4, fadeOut: 4 });
     //    playWithFade(sounds["tension1"], 2, 2); // fade-in 1.5s, fade-out 1s, durée totale 4s  
-    await MATTMARKET(1200);
+    function animatePingPong(img, angleMax, duration) {
+      const start = performance.now();
+
+      function loop(now) {
+        let t = (now - start) / duration;
+        if (t > 1) t = 1;
+
+        // t = 0→1 puis retour 1→0 → sinus
+        const pingpong = Math.sin(t * Math.PI);
+        const angle = pingpong * (angleMax * Math.PI / 180);
+
+        drawOscillatingSprite(img, angle);
+
+        if (t < 1) requestAnimationFrame(loop);  // arrêt automatique
+      }
+
+      requestAnimationFrame(loop);
+    }
+
+    function drawOscillatingSprite(img, angle) {
+      const cx = WIDTH / 2;
+      const cy = HEIGHT / 2;
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(angle);
+      ctx.scale(1.05, 1.05);
+      ctx.drawImage(img, -WIDTH / 2, -HEIGHT / 2, WIDTH, HEIGHT);
+      ctx.restore();
+    }
+
+    // Appel : cycle complet (aller-retour)
+    animatePingPong(images[3], 15, 6000);  // 2 secondes total
+
+    await MATTMARKET(1100);
     await fadeOutLogo(50);
     ctx.drawImage(images[3], 0, 0);
     await fadeOutLogo(50);
@@ -396,31 +474,78 @@ async function chargMedia() {
   }
   console.log("Tous les médias images + sons sont prêts !");
 }
-function playSound(name, volume = 1, playbackRate = 1) {
+function playSound(name, options = {}) {
+  const {
+    volume = 1,
+    fadeIn = 0,
+    fadeOut = 0,
+    debutSon = 0,
+    playbackRate = 1,
+    finSon = null
+  } = options;
+
   if (!sounds[name]) {
     console.warn("Son inconnu :", name);
     return;
   }
+
   const src = audioCtx.createBufferSource();
   src.buffer = sounds[name];
-  const gain = audioCtx.createGain();
-  gain.gain.value = volume;
   src.playbackRate.value = playbackRate;
+
+  const gain = audioCtx.createGain();
   src.connect(gain).connect(audioCtx.destination);
-  src.start(0);
+
+  const nowAudio = audioCtx.currentTime;
+
+  // ---------- DUREE ----------
+  let duration = (finSon !== null)
+    ? Math.max(0, finSon - debutSon)
+    : Math.max(0, src.buffer.duration - debutSon);
+
+  // empêcher les valeurs invalides
+  if (duration <= 0) {
+    duration = 0.001; // 1 ms, évite erreur stop-before-start
+  }
+
+  // empêcher fadeOut > durée
+  const realFadeOut = Math.min(fadeOut, duration - 0.001);
+
+  // ---------- FADE-IN ----------
+  if (fadeIn > 0) {
+    gain.gain.setValueAtTime(0, nowAudio);
+    gain.gain.linearRampToValueAtTime(volume, nowAudio + fadeIn);
+  } else {
+    gain.gain.setValueAtTime(volume, nowAudio);
+  }
+
+  // ---------- LECTURE ----------
+  src.start(nowAudio, debutSon, duration);
+
+  // ---------- FADE-OUT ----------
+  if (realFadeOut > 0) {
+    const fadeStart = nowAudio + duration - realFadeOut;
+
+    gain.gain.setValueAtTime(volume, fadeStart);
+    gain.gain.linearRampToValueAtTime(0, fadeStart + realFadeOut);
+
+    src.stop(fadeStart + realFadeOut);
+  } else {
+    src.stop(nowAudio + duration);
+  }
+
   return { src, gain };
 }
-function playWithFade(buffer, fadeIn = 1.0, fadeOut = 1.0, duration = null) {
+
+/*function playWithFade(buffer, fadeIn = 1.0, fadeOut = 1.0, duration = null) {
   const src = audioCtx.createBufferSource();
   src.buffer = buffer;
   const gain = audioCtx.createGain();
   gain.gain.value = 0; // début silencieux
-  src.connect(gain).connect(audioCtx.destination);
-  const now = audioCtx.currentTime;
   // Fade-in
   gain.gain.setValueAtTime(0, now);
   gain.gain.linearRampToValueAtTime(1, now + fadeIn);
-  // Si on a demandé une durée :
+  // Si on a demandé                                                                                                                                                                                                                    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,une durée :
   if (duration !== null) {
     // moment du début du fade-out
     const fadeStart = now + duration - fadeOut;
@@ -431,7 +556,7 @@ function playWithFade(buffer, fadeIn = 1.0, fadeOut = 1.0, duration = null) {
     src.stop(fadeStart + fadeOut);
   }
   src.start();
-}
+}*/
 function GestionClavier() {  // const keys = { left: false, right: false, up: false, down: false, param: false };
   window.addEventListener("keydown", e => {
     if (e.key === "ArrowLeft") keys.left = true;
@@ -473,11 +598,11 @@ function handleTouch(e) {
   const dx = x - WIDTH / 2;
   const dy = y - HEIGHT / 2;
   const dist = Math.hypot(dx, dy);
-  const angle = Math.atan2(dy, dx);
+  const angleTouch = Math.atan2(dy, dx);
   // on limite la distance max (500/2 = rayon max)
   const maxDist = WIDTH / 2;
   const intensity = Math.min(dist / maxDist, 1); // entre 0 et 1
-  touchDir = { angle, intensity };
+  touchDir = { angleTouch, intensity };
 }
 function moveClavier() {
   //const cursor = { x: WIDTH / 2, y: HEIGHT / 2, w: 16, h: 16, speed: 3.1 };
@@ -490,8 +615,8 @@ function moveClavier() {
 function moveTactile() {
   if (touchDir) {
     const speed = maxSpeed * touchDir.intensity;
-    cursor.x += Math.cos(touchDir.angle) * speed;
-    cursor.y += Math.sin(touchDir.angle) * speed;
+    cursor.x += Math.cos(touchDir.angleTouch) * speed;
+    cursor.y += Math.sin(touchDir.angleTouch) * speed;
   }
 }
 function screenWall() { //cursor{},viewWidth,HEIGHT
