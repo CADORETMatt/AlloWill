@@ -48,7 +48,6 @@ const buttonPositions = [
 let isImmobile = false;
 let audioCtx = null;          // Le vrai moteur audio
 const sounds = {};            // Dictionnaire : nom → AudioBuffer
-
 const soundList = [
   { name: "neon", url: "Sons/NeonEntier.wav" },
   { name: "tension1", url: "Sons/tension1.wav" }
@@ -61,18 +60,15 @@ const srcList = [
   'LogoMattMRKT.png'
 ];
 let loaded = 0;
-
 let PlayerImg = null; // <--- global !
 console.log("Variables déclarées !")
 showStartScreen();
 function showStartScreen() {
   ctx.fillStyle = "black";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
-
   ctx.fillStyle = "white";
   ctx.font = "28px Arial";
   ctx.textAlign = "center";
-
   ctx.fillText("Appuyez sur ESPACE ou", canvas.width / 2, canvas.height / 2 - 20);
   ctx.fillText("Touchez pour COMMENCER", canvas.width / 2, canvas.height / 2 + 20);
 }
@@ -128,8 +124,6 @@ async function Run() {
     //};
     //audio.load();
     // Affiche le logo immobile 1 seconde
-    ctx.drawImage(images[3], 0, 0);
-    playSound("neon", { fadeIn: 1, fadeOut: 1 });
     //    await MATTMARKET(1000);
     /*playAudio("./Sons/NeonEntier.wav");
     //Lire dans un ctx "Sons/NeonEntier.wav" de 0:100 à 2:600 :
@@ -143,21 +137,6 @@ async function Run() {
       source.connect(ctx.destination);
       source.start(0); // joue une seule fois
     } */
-    // Fade-out progressif
-    ctx.fillStyle = "black";
-    ctx.fillRect(0, 0, WIDTH, HEIGHT);
-    await MATTMARKET(500); ///////////////////Puis CLIC
-    //     await fadeOutLogo(50); 
-    ctx.drawImage(images[3], 0, 0);
-    ctx.fillStyle = 'rgba(0,0,0,0.8)';
-    //ctx.fillRect(0, 203, WIDTH, HEIGHT);
-    await fadeOutLogo(50);
-    ctx.drawImage(images[3], 0, 0);
-    ctx.fillStyle = 'rgba(0,0,0,0.8)';
-    //  ctx.fillRect(0, 203, WIDTH, HEIGHT);
-
-    await fadeOutLogo(50);
-    ctx.drawImage(images[3], 0, 0);
     //Oscillation de 10 degrés du context autour du centre
     // Oscillation entre -10° et +10°
     /*function linear(t) { return t; }
@@ -169,7 +148,6 @@ async function Run() {
     animate(images[3], 5, 500, linear);
     await MATTMARKET(800);
     animate(images[3], -7, 500, linear);
-
     function animate(img, angleMax, duration, easing) {
       const angleAnim = Math.sin(Date.now() * 0.003) * (angleMax * Math.PI / 180);
       const start = performance.now();
@@ -179,8 +157,8 @@ async function Run() {
         const eased = easing(t);
         // Exemple : déplacement horizontal
         const rot = eased * angleAnim;
-        drawOscillatingSprite(img);
-        function drawOscillatingSprite(img) {
+        drawZoomOscill(img);
+        function drawZoomOscill(img) {
           const cx = WIDTH / 2;
           const cy = HEIGHT / 2;
           ctx.save();
@@ -201,98 +179,112 @@ async function Run() {
       requestAnimationFrame(loop);
     }
 */
-
-
     //ctx.fillStyle = 'rgba(0,0,0,0.8 )';
     //ctx.fillRect(0, 203, WIDTH, HEIGHT);
     //   sounds[0].currentTime = 0;
     //sounds[1].play().catch(err => console.warn("Autoplay bloqué :", err));
-    // Joue un premier son si tu veux :
-    await MATTMARKET(1500);
-    playSound("tension1", { volume: 0.8, fadeIn: 4, fadeOut: 4 });
-    //    playWithFade(sounds["tension1"], 2, 2); // fade-in 1.5s, fade-out 1s, durée totale 4s  
     function animatePingPong(img, angleMax, duration) {
       const start = performance.now();
-
       function loop(now) {
         let t = (now - start) / duration;
         if (t > 1) t = 1;
-
         // t = 0→1 puis retour 1→0 → sinus
         const pingpong = Math.sin(t * Math.PI);
         const angle = pingpong * (angleMax * Math.PI / 180);
-
-        drawOscillatingSprite(img, angle);
-
+        drawZoomOscill(img, 1.05, angle);
         if (t < 1) requestAnimationFrame(loop);  // arrêt automatique
       }
-
       requestAnimationFrame(loop);
     }
-
-    function drawOscillatingSprite(img, angle) {
+    function drawZoomOscill(img, zoomOscill, angle = 0) {
       const cx = WIDTH / 2;
       const cy = HEIGHT / 2;
       ctx.save();
       ctx.translate(cx, cy);
       ctx.rotate(angle);
-      ctx.scale(1.05, 1.05);
+      ctx.scale(zoomOscill, zoomOscill);
       ctx.drawImage(img, -WIDTH / 2, -HEIGHT / 2, WIDTH, HEIGHT);
       ctx.restore();
     }
-
+    ///////////////////////////////////////////////////////////////////////
+    playSound("neon", { fadeIn: 1, fadeOut: 1 });
+    // Fade-out progressif
+    ctx.fillStyle = "black";
+    ctx.fillRect(0, 0, WIDTH, HEIGHT);
+    await MATTMARKET(500); ///////Puis CLIC
+    ctx.drawImage(images[3], 0, 0);
+    ctx.fillStyle = 'rgba(0,0,0,0.8)';
+    //ctx.fillRect(0, 203, WIDTH, HEIGHT);
+    await fadeOutLogo(50);
+    ctx.drawImage(images[3], 0, 0);
+    ctx.fillStyle = 'rgba(0,0,0,0.8)';
+    //  ctx.fillRect(0, 203, WIDTH, HEIGHT);
+    await fadeOutLogo(50);
+    ctx.drawImage(images[3], 0, 0);
+    // Joue un premier son si tu veux :
+    await MATTMARKET(1000);
+    playSound("tension1", { volume: 0.8, fadeIn: 2, fadeOut: 4 });
+    await MATTMARKET(500);
     // Appel : cycle complet (aller-retour)
     animatePingPong(images[3], 15, 6000);  // 2 secondes total
-
-    await MATTMARKET(1100);
+    await MATTMARKET(400);
     await fadeOutLogo(50);
-    ctx.drawImage(images[3], 0, 0);
+    drawZoomOscill(images[3], 1.2);
     await fadeOutLogo(50);
-    ctx.drawImage(images[3], 0, 0);
+    drawZoomOscill(images[3], -1.2);
     await MATTMARKET(500);
-    //sounds[1].currentTime = 0;
-    //sounds[1].play().catch(err => console.warn("Autoplay bloqué :", err));
     await fadeOutLogo(100);
-    ctx.drawImage(images[3], 0, 0);
+    drawZoomOscill(images[3], 1.2);
     await fadeOutLogo(100);
-    ctx.drawImage(images[3], 0, 0);
+    drawZoomOscill(images[3], -1.2);
     await fadeOutLogo(100);
-    ctx.drawImage(images[3], 0, 0);
-
+    drawZoomOscill(images[3], 1.2);
+    await fadeOutLogo(100);
+    drawZoomOscill(images[3], -1.2);
+    await MATTMARKET(3400);
+    await MATTMARKET(1000);/*
+await fadeOutLogo(50);
+    drawZoomOscill(images[3], 1.2);
+    await fadeOutLogo(50);
+    drawZoomOscill(images[3], -1.2);
+    await MATTMARKET(500);
+    await fadeOutLogo(100);
+    drawZoomOscill(images[3], 1.2);
+    await fadeOutLogo(100);
+    drawZoomOscill(images[3], -1.2);
+    await fadeOutLogo(100);
+    drawZoomOscill(images[3], 1.2);
+    await fadeOutLogo(100);
+    drawZoomOscill(images[3], -1.2);*/
+    await MATTMARKET(2457);
+    /////////////////////////////////////////////////////////////
     function fadeOutLogo(duration = 1500) {
       return new Promise(resolve => {
         let start = null;
-
         function step(timestamp) {
           if (!start) start = timestamp;
           const progress = Math.min((timestamp - start) / duration, 1);
-
           // dessine le logo
           ctx.drawImage(images[3], 0, 0);
-
           // couche noire qui augmente
           ctx.fillStyle = `rgba(0,0,0,${progress})`;
           ctx.fillRect(0, 0, WIDTH, HEIGHT);
-
           if (progress < 1) {
             requestAnimationFrame(step);
           } else {
             resolve();
           }
         }
-
         requestAnimationFrame(step);
       });
     }
-
     /*  // Attente logo
       ctx.drawImage(images[3], 0, 0);
       //fadeOut(200); 
       let fade = 0; // commence transparent
       fadeOut();
       function fadeOut() {
-  
-        while (fade < 1) {
+          while (fade < 1) {
           console.log("fade :", fade);
           fade += 0.00002;
           if (fade > 1) fade = 1;
@@ -301,8 +293,6 @@ async function Run() {
         }
       }
   */
-    await MATTMARKET(6457);
-
     // Cha for (let i = 0; i <
     // data.length; i += 4) {rger et préparer l’audio
     //    audio.oncanplaythrough = () => {
@@ -313,9 +303,7 @@ async function Run() {
     // });
     // audio.play().catch(err => console.warn("Lecture audio bloquée :", err));
     //};
-
     PlayerImg = images[1];
-
     /*Algo - A PLACER
             ///////////////////////////////////////
             - // Créer un objet Image
@@ -383,12 +371,11 @@ function endGame(success) {
     document.location.reload();
   }, 500);
 }
-
 function draw() {
   // Calcul centrage et échelle
-  const scale = 1;//Math.min(WIDTH / PlayerImg.width, HEIGHT / PlayerImg.height);
-  const drawW = PlayerImg.width * scale;
-  const drawH = PlayerImg.height * scale;
+  const scaleDraw = 1;//Math.min(WIDTH / PlayerImg.width, HEIGHT / PlayerImg.height);
+  const drawW = PlayerImg.width * scaleDraw;
+  const drawH = PlayerImg.height * scaleDraw;
   const offsetX = (WIDTH - drawW) / 2;
   const offsetY = (HEIGHT - drawH) / 2;
   ctx.fillStyle = "#1a1a1a";
@@ -466,7 +453,6 @@ async function chargMedia() {
   // ⚠️ Création du contexte audio seulement APRÈS interaction utilisateur
   if (!audioCtx)
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
   // Chargement des sons WebAudio (async + await)
   for (let s of soundList) {
     sounds[s.name] = await loadSound(s.url);
@@ -488,29 +474,22 @@ function playSound(name, options = {}) {
     console.warn("Son inconnu :", name);
     return;
   }
-
   const src = audioCtx.createBufferSource();
   src.buffer = sounds[name];
   src.playbackRate.value = playbackRate;
-
   const gain = audioCtx.createGain();
   src.connect(gain).connect(audioCtx.destination);
-
   const nowAudio = audioCtx.currentTime;
-
   // ---------- DUREE ----------
   let duration = (finSon !== null)
     ? Math.max(0, finSon - debutSon)
     : Math.max(0, src.buffer.duration - debutSon);
-
   // empêcher les valeurs invalides
   if (duration <= 0) {
     duration = 0.001; // 1 ms, évite erreur stop-before-start
   }
-
   // empêcher fadeOut > durée
   const realFadeOut = Math.min(fadeOut, duration - 0.001);
-
   // ---------- FADE-IN ----------
   if (fadeIn > 0) {
     gain.gain.setValueAtTime(0, nowAudio);
@@ -518,25 +497,19 @@ function playSound(name, options = {}) {
   } else {
     gain.gain.setValueAtTime(volume, nowAudio);
   }
-
   // ---------- LECTURE ----------
   src.start(nowAudio, debutSon, duration);
-
   // ---------- FADE-OUT ----------
   if (realFadeOut > 0) {
     const fadeStart = nowAudio + duration - realFadeOut;
-
     gain.gain.setValueAtTime(volume, fadeStart);
     gain.gain.linearRampToValueAtTime(0, fadeStart + realFadeOut);
-
     src.stop(fadeStart + realFadeOut);
   } else {
     src.stop(nowAudio + duration);
   }
-
   return { src, gain };
 }
-
 /*function playWithFade(buffer, fadeIn = 1.0, fadeOut = 1.0, duration = null) {
   const src = audioCtx.createBufferSource();
   src.buffer = buffer;
@@ -656,7 +629,6 @@ function drawPauseOverlay() {
   //console.log("Arrêt de la pause !");
   //});
 }
-
 function writeLine(numLigne, text) {
   //const totalLignes = 10; // nombre total de lignes
   const marginTop = 20;     // marge avant la 1re ligne
@@ -670,7 +642,6 @@ function writeLine(numLigne, text) {
 
   ctx.fillText(text, 2 * WIDTH * pourcBord / 100, y + hautLigne);
 }
-
 function affOptions() {
   writeLine(1, "Avancez ou reculez :");
   writeLine(2, "Flèches directionnelles");
