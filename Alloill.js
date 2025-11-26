@@ -50,14 +50,17 @@ let audioCtx = null;          // Le vrai moteur audio
 const sounds = {};            // Dictionnaire : nom → AudioBuffer
 const soundList = [
   { name: "neon", url: "Sons/NeonEntier.wav" },
-  { name: "tension1", url: "Sons/tension1.wav" }
+  { name: "tension1", url: "Sons/tension1.wav" },
+  { name: "glitch1", url: "Sons/glitch1.wav" }
 ];
 const images = [];
 const srcList = [
   'Asset1-1.bmp',
   'Hum1NB.png',
   'rond1000.png',
-  'LogoMattMRKT.png'
+  'LogoMattMRKT.png',
+  'HommeMattMRKT.png',
+  'LogoHommeDetour.png'
 ];
 let loaded = 0;
 let PlayerImg = null; // <--- global !
@@ -69,8 +72,10 @@ function showStartScreen() {
   ctx.fillStyle = "white";
   ctx.font = "28px Arial";
   ctx.textAlign = "center";
-  ctx.fillText("Appuyez sur ESPACE ou", canvas.width / 2, canvas.height / 2 - 20);
-  ctx.fillText("Touchez pour COMMENCER", canvas.width / 2, canvas.height / 2 + 20);
+  ctx.fillText("Pour plus d'immersion :", canvas.width / 2, canvas.height / 2 - 100);
+  ctx.fillText("F11 + Eteindre lumières", canvas.width / 2, canvas.height / 2 - 60);
+  ctx.fillText("Appuyez sur ESPACE ou", canvas.width / 2, canvas.height / 2 + 60);
+  ctx.fillText("Touchez pour COMMENCER", canvas.width / 2, canvas.height / 2 + 100);
 }
 //alert("Attention, activation du son...");
 chargMedia();
@@ -191,7 +196,7 @@ async function Run() {
         // t = 0→1 puis retour 1→0 → sinus
         const pingpong = Math.sin(t * Math.PI);
         const angle = pingpong * (angleMax * Math.PI / 180);
-        drawZoomOscill(img, 1.05, angle);
+        drawZoomOscill(img, 1.15, angle);
         if (t < 1) requestAnimationFrame(loop);  // arrêt automatique
       }
       requestAnimationFrame(loop);
@@ -207,11 +212,11 @@ async function Run() {
       ctx.restore();
     }
     ///////////////////////////////////////////////////////////////////////
-    playSound("neon", { fadeIn: 1, fadeOut: 1 });
+    playSound("neon", { fadeIn: 1, /*fadeOut: 1,*/ finSon: 3.7 });
     // Fade-out progressif
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, WIDTH, HEIGHT);
-    await MATTMARKET(500); ///////Puis CLIC
+    await MATTMARKET(500); ///////Puis CLIc
     ctx.drawImage(images[3], 0, 0);
     ctx.fillStyle = 'rgba(0,0,0,0.8)';
     //ctx.fillRect(0, 203, WIDTH, HEIGHT);
@@ -229,19 +234,33 @@ async function Run() {
     animatePingPong(images[3], 15, 6000);  // 2 secondes total
     await MATTMARKET(400);
     await fadeOutLogo(50);
-    drawZoomOscill(images[3], 1.2);
+    drawZoomOscill(images[3], 1);
     await fadeOutLogo(50);
-    drawZoomOscill(images[3], -1.2);
+    drawZoomOscill(images[3], 1);
     await MATTMARKET(500);
     await fadeOutLogo(100);
-    drawZoomOscill(images[3], 1.2);
+    drawZoomOscill(images[3], 1);
     await fadeOutLogo(100);
-    drawZoomOscill(images[3], -1.2);
+    drawZoomOscill(images[3], 1);
     await fadeOutLogo(100);
-    drawZoomOscill(images[3], 1.2);
-    await fadeOutLogo(100);
-    drawZoomOscill(images[3], -1.2);
-    await MATTMARKET(3400);
+    drawZoomOscill(images[3], 1);
+
+    await MATTMARKET(3300);
+    playSound("glitch1", { volume: 1, fadeOut: 1 });
+    await MATTMARKET(100);
+    await fadeOutLogo(25);
+    drawZoomOscill(images[4], 1);
+    await MATTMARKET(150);
+    await fadeOutLogo(25);
+    drawZoomOscill(images[4], 1);
+    await fadeOutLogo(25);
+    drawZoomOscill(images[4], 1.1);
+    await fadeOutLogo(25);
+    drawZoomOscill(images[4], 1.2);
+    await fadeOutLogo(25);
+    drawZoomOscill(images[4], 1.3);
+    await fadeOutLogo(25);
+    drawZoomOscill(images[4], 1.4);
     await MATTMARKET(1000);/*
 await fadeOutLogo(50);
     drawZoomOscill(images[3], 1.2);
