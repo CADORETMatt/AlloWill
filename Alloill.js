@@ -70,14 +70,18 @@ const srcList = [
   'rond1000.png',
   'LogoMattMRKT.png',
   'HommeMattMRKT.png',
-  'LogoHommeDetour.png',
-  'skelx5detour.png'
+  'LogoHommeDetour.png',//images[5]
+  'skelx5right.png',
+  'skelx5left.png'
 ];
+//skinPlayer.width = images[6].width;
+//skinPlayer.height = images[6].height;
 let loaded = 0;
 //let PlayerImg = null; // <--- global !
 console.log("Variables déclarées !")
 showStartScreen();
 chargMedia();
+skinPlayer = images[6];
 //PlayerImg = images[1];
 console.log("Validation...");
 Run();
@@ -268,6 +272,15 @@ function update() {
   screenWall();
   // Check "tâches"
   incTaskOrWin(); //cursor{}, tasksDone, requiredTasks, endGame()   
+  if (cursor.x >= WIDTH / 2 && skinPlayer == images[7]) skinPlayer = images[6];
+  if (cursor.x < WIDTH / 2 && skinPlayer == images[6]) skinPlayer = images[7];
+  /*  function FlipH(img) {
+      ctx.save();
+      ctx.translate(img.width, 0);
+      ctx.scale(-1, 1);
+      ctx.drawImage(img, 0, 0);
+      ctx.restore();
+    }*/
 }
 function endGame(success) {
   if (gameOver) return;   // <-- stoppe les appels multiples
@@ -280,8 +293,8 @@ function endGame(success) {
 function draw() {
   // Calcul centrage et échelle
   const scaleDraw = 1;//Math.min(WIDTH / PlayerImg.width, HEIGHT / PlayerImg.height);
-  const drawW = images[6].width * scaleDraw;
-  const drawH = images[6].height * scaleDraw;
+  const drawW = skinPlayer.width * scaleDraw;
+  const drawH = skinPlayer.height * scaleDraw;
   const offsetX = (WIDTH - drawW) / 2;
   const offsetY = (HEIGHT - drawH) / 2;
   ctx.fillStyle = "#1a1a1a";
@@ -295,14 +308,7 @@ function draw() {
   );// Dessiner uniquement la portion visible du décor*/
   ctx.globalCompositeOperation = "source-over"; // par défaut 
   //ctx.globalAlpha = 0.25;//opacité pour ombre personnage
-  // Animation sprite sheet (images[6])
-  // sourceX, sourceY, sourceW, sourceH, dx, dy, dw, dh
-  const srcX = spriteFrame * spriteFrameWidth;
-  ctx.drawImage(
-    images[6],
-    srcX, 0, spriteFrameWidth, spriteFrameHeight,
-    offsetX, offsetY + 50, drawW, drawH
-  );  //ctx.globalAlpha = 1;
+  //ctx.globalAlpha = 1;
   // LightTarget
   ctx.fillStyle = "#ffffff00";
   ctx.fillRect(cursor.x, cursor.y, cursor.w, cursor.h);
@@ -315,13 +321,25 @@ function draw() {
   ctx.beginPath();
   ctx.arc(cursor.x + cursor.w / 2, cursor.y + cursor.h / 2, radius, 0, Math.PI * 2);
   ctx.fill();
-  ctx.globalAlpha = 0.8;
+  ctx.globalAlpha = 0.6;
   ctx.drawImage(
     images[2], 500 - (cursor.x + cursor.w / 2), 500 - (cursor.y + cursor.h / 2),          // zone du décor à afficher
     WIDTH, HEIGHT,   // portion du décor
     0, 0, WIDTH, HEIGHT  // position sur le canvas
   );// Dessiner uniquement la portion visible du décor*/
   ctx.globalAlpha = 1;
+  ctx.save();
+  // Animation sprite sheet (images[6])
+  // sourceX, sourceY, sourceW, sourceH, dx, dy, dw, dh
+  const srcX = spriteFrame * spriteFrameWidth;
+  ctx.drawImage(
+    skinPlayer,
+    srcX, 0, spriteFrameWidth, spriteFrameHeight,
+    offsetX + 275, offsetY, drawW - 570, drawH + 100
+  );
+  //ctx.fillStyle = "rgba(4, 0, 60, 0.3)"; // obscurité
+  //ctx.fillRect(0, 0, WIDTH, HEIGHT);
+  ctx.restore();
 }
 //**JEU***********************************
 /*       ***affichage décor
@@ -357,10 +375,10 @@ async function chargMedia() {
       loaded++;
       if (loaded === srcList.length) {
         console.log("Toutes les images sont chargées !");
-        // Si images[6] est une spritesheet, recalculer la taille d'une frame
-        if (images[6] && images[6].width && spriteFrameCount > 0) {
-          spriteFrameWidth = Math.floor(images[6].width / spriteFrameCount);
-          spriteFrameHeight = images[6].height;
+        // Si skinPlayer est une spritesheet, recalculer la taille d'une frame
+        if (skinPlayer && skinPlayer.width && spriteFrameCount > 0) {
+          spriteFrameWidth = Math.floor(skinPlayer.width / spriteFrameCount);
+          spriteFrameHeight = skinPlayer.height;
           console.log("spriteFrameWidth =", spriteFrameWidth, "spriteFrameHeight =", spriteFrameHeight);
         }
       }
