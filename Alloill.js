@@ -495,8 +495,8 @@ function handleTouch(e) {
   const y = touch.clientY - rect.top;
   handlePointer(x, y);
   // coordonnées relatives au centre
-  const dx = x - WIDTH / 2;
-  const dy = y - HEIGHT / 2;
+  const dx = x - cursor.x; // WIDTH / 2;
+  const dy = y - cursor.y; //HEIGHT / 2;
   const dist = Math.hypot(dx, dy);
   const angleTouch = Math.atan2(dy, dx);
   // on limite la distance max (500/2 = rayon max)

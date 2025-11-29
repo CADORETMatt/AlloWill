@@ -25,7 +25,8 @@ let vitesseCourse = 6; // vitesse en courant
 //////////// Variables pour le défilement/////////////
 let cameraX = 0;        // décalage horizontal de la "vue"
 const decorWidth = 1000; // largeur totale du décor
-const edgeZone = 30;          // distance au bord où le scrolling commence
+const edgeZone = 30;// distance au bord où le scrolling commence
+let clavierUse = false;
 let frameNum = 0;
 let exCamera = cameraX;
 let lastTimestamp = performance.now();
@@ -224,7 +225,7 @@ async function Run() {
     document.addEventListener("keydown", keyStart);
     canvas.addEventListener("touchstart", touchStart);
     function keyStart(e) {
-      if (e.code === "Space") startGame();
+      if (e.code === "Space"){clavierUse=true; startGame();}
     }
     function touchStart() {
       startGame();
@@ -495,8 +496,8 @@ function handleTouch(e) {
   const y = touch.clientY - rect.top;
   handlePointer(x, y);
   // coordonnées relatives au centre
-  const dx = x - WIDTH / 2;
-  const dy = y - HEIGHT / 2;
+  const dx = x - cursor.x; // WIDTH / 2;
+  const dy = y - cursor.y; //HEIGHT / 2;
   const dist = Math.hypot(dx, dy);
   const angleTouch = Math.atan2(dy, dx);
   // on limite la distance max (500/2 = rayon max)
@@ -603,7 +604,9 @@ function handlePointer(x, y) {
   }
 }
 function antiDefilPerm() {
-  if (cursor.x < edgeZone - 17 && keys.left === false && keys.right === false) cursor.x += cursor.speed; // cursor reste sur place
+    console.log ("clavierUse :",clavierUse);
+ if(clavierUse===true){
+     if (cursor.x < edgeZone - 17 && keys.left === false && keys.right === false) cursor.x += cursor.speed; // cursor reste sur place
   if (cursor.x > viewWidth - edgeZone && keys.left === false && keys.right === false) cursor.x -= cursor.speed; // cursor reste sur place
   if (cursor.x < edgeZone - 17 && cameraX > 0) {
     cameraX -= cursor.speed; // défilement à gauche
@@ -611,7 +614,7 @@ function antiDefilPerm() {
     cameraX += cursor.speed; // défilement à droite
     if (cameraX > decorWidth - viewWidth / 2) cameraX = decorWidth - viewWidth / 2;
   }
-}
+}}
 function updateSpriteAnimation(deltaMs) {
   // si la caméra a bougé, faire avancer l'animation
   if (cameraX !== exCamera) {
