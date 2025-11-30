@@ -9,9 +9,9 @@ console.log("Canvas interne :", canvas.width, canvas.height);
 let viewWidth = WIDTH;   // largeur de la fenêtre visible
 let gameStarted = false;
 // --- GAME STATE ---
-let timeLeft = 60;
-let gameOver = false;
-let tasksDone = 0;
+let timeLeft = 60;                          //
+let gameOver = false;                       //
+let tasksDone = 0;                          //
 let requiredTasks = 3;
 // Gestion du clavier
 const keys = { left: false, right: false, up: false, down: false, space: false };
@@ -24,13 +24,18 @@ let vitesseLampe = 4; // multiplicateur de vitesse lampe de poche
 let vitesseCourse = 6; // vitesse en courant
 //////////// Variables pour le défilement/////////////
 let cameraX = 0;        // décalage horizontal de la "vue"
+let exCamera = cameraX;                     //
 const decorWidth = 1000; // largeur totale du décor
 const edgeZone = 30;// distance au bord où le scrolling commence
 let clavierUse = false;
-let frameNum = 0;
-let exCamera = cameraX;
+///////////    Recharge Partie   /////////////
+let rafId = null;
+//let isLoopRunning = false;
+/*let timeLeft = 60; let gameOver = false; let tasksDone = 0; let cameraX = 0;
+    const cursor = { x: WIDTH / 2, y: HEIGHT / 2, w: 16, h: 16, speed: 1.5 };
+//////////////////////////////////////////////*/
+//let frameNum = 0;
 let lastTimestamp = performance.now();
-
 let spriteFrame = 0;
 const spriteFrameCount = 5;       // ajuster si nécessaire (nombre d'images dans la spritesheet)
 let spriteAnimTimer = 0;
@@ -175,28 +180,11 @@ async function Run() {
       //setTimeout(userInactif, 1000); // vérifie toutes les secondes  
     }
     // --- GAME LOOP ---
+    // debutPartie:
     loop();
-    ///////////////////////////////////////////////////////////
-    function fadeOutLogo(duration = 1500) {
-      return new Promise(resolve => {
-        let start = null;
-        function step(timestamp) {
-          if (!start) start = timestamp;
-          const progress = Math.min((timestamp - start) / duration, 1);
-          // dessine le logo
-          ctx.drawImage(images[3], 0, 0);
-          // couche noire qui augmente
-          ctx.fillStyle = `rgba(0,0,0,${progress})`;
-          ctx.fillRect(0, 0, WIDTH, HEIGHT);
-          if (progress < 1) {
-            requestAnimationFrame(step);
-          } else {
-            resolve();
-          }
-        }
-        requestAnimationFrame(step);
-      });
-    }
+    //// ///////////////////////////////////////////////////////
+    ///           fadeOutLogo           ///////////////////////
+    // ///////////////////////////////////////////////////////
     function animatePingPong(img, angleMax, duration) {
       const start = performance.now();
       requestAnimationFrame(loop);
@@ -225,7 +213,7 @@ async function Run() {
     document.addEventListener("keydown", keyStart);
     canvas.addEventListener("touchstart", touchStart);
     function keyStart(e) {
-      if (e.code === "Space"){clavierUse=true; startGame();}
+      if (e.code === "Space") { clavierUse = true; startGame(); }
     }
     function touchStart() {
       startGame();
@@ -233,6 +221,7 @@ async function Run() {
     function startGame() {
       if (gameStarted) return;
       gameStarted = true;
+      console.log("Clavier (!=Tactile) : ", clavierUse);
       // Débloque le contexte audio (= indispensable sur mobile)
       if (audioCtx.state === "suspended") {
         audioCtx.resume();
@@ -244,6 +233,9 @@ async function Run() {
   }
 }
 function loop(timestamp) {
+  //if (isLoopRunning) return;  // Évite doublons
+  //isLoopRunning = true;
+  // ... code ...
   const now = timestamp || performance.now();
   const delta = now - lastTimestamp;
   lastTimestamp = now;
@@ -257,13 +249,15 @@ function loop(timestamp) {
       draw();
     }
     defileTimerOrDie();
+    //console.log("Aff. Loop/Timer.");
     Timer();
   } else {
     console.log("En pause : ", paused);
     drawPauseOverlay();
     affOptions();
   }
-  requestAnimationFrame(loop);
+  rafId = requestAnimationFrame(loop);
+  //requestAnimationFrame(loop);
 }
 function update() {
   if (gameOver) return;
@@ -288,8 +282,47 @@ function endGame(success) {
   gameOver = true;
   setTimeout(() => {
     alert(success ? "Tu as survécu!" : "Le monstre t’a attrapé!");
-    document.location.reload();
+    changeGame();
+    timeLeft = 60; gameOver = false; tasksDone = 0; cameraX = 0;
+    //    cursor = { x: WIDTH / 2, y: HEIGHT / 2, w: 16, h: 16, speed: 1.5 };
+    cursor.x = WIDTH / 2; cursor.y = HEIGHT / 2; cursor.speed = 1.5;
+    if (rafId !== null) {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+    // Relance une seule boucle propre
+    lastTimestamp = performance.now();  // très important !
+    rafId = requestAnimationFrame(loop);  // ← uniquement ici
   }, 500);
+}
+function changeGame() { //  marche pas !!
+  // éclair
+  console.log("Eclair !");
+  ctx.fillStyle = "#ffffffff";
+  ctx.fillRect(0, 0, WIDTH, HEIGHT);
+  for (let i = 0; i < 10000; i += 1) { }
+  console.log("vitLmp : ", vitesseLampe, " c.speed : ", cursor.speed);
+}
+
+function fadeOutLogo(duration = 1500) {
+  return new Promise(resolve => {
+    let start = null;
+    function step(timestamp) {
+      if (!start) start = timestamp;
+      const progress = Math.min((timestamp - start) / duration, 1);
+      // dessine le logo
+      ctx.drawImage(images[3], 0, 0);
+      // couche noire qui augmente
+      ctx.fillStyle = `rgba(0,0,0,${progress})`;
+      ctx.fillRect(0, 0, WIDTH, HEIGHT);
+      if (progress < 1) {
+        requestAnimationFrame(step);
+      } else {
+        resolve();
+      }
+    }
+    requestAnimationFrame(step);
+  });
 }
 function draw() {
   // Calcul centrage et échelle
@@ -393,9 +426,9 @@ async function chargMedia() {
   // Chargement des sons WebAudio (async + await)
   for (let s of soundList) {
     sounds[s.name] = await loadSound(s.url);
-    console.log("Son chargé :", s.name);
+    //console.log("Son chargé :", s.name);
   }
-  console.log("Tous les médias images + sons sont prêts !");
+  console.log("Tous les médias (images + sons) sont prêts !");
 }
 function showStartScreen() {
   ctx.fillStyle = "black";
@@ -408,6 +441,9 @@ function showStartScreen() {
   ctx.fillText("Appuyez sur ESPACE ou", canvas.width / 2, canvas.height / 2 + 60);
   ctx.fillText("Touchez pour COMMENCER", canvas.width / 2, canvas.height / 2 + 100);
 }
+/*function newGame() {
+  continue debutPartie;
+}*/
 function playSound(name, options = {}) {
   const {
     volume = 1,
@@ -604,17 +640,18 @@ function handlePointer(x, y) {
   }
 }
 function antiDefilPerm() {
-    console.log ("clavierUse :",clavierUse);
- if(clavierUse===true){
-     if (cursor.x < edgeZone - 17 && keys.left === false && keys.right === false) cursor.x += cursor.speed; // cursor reste sur place
-  if (cursor.x > viewWidth - edgeZone && keys.left === false && keys.right === false) cursor.x -= cursor.speed; // cursor reste sur place
-  if (cursor.x < edgeZone - 17 && cameraX > 0) {
-    cameraX -= cursor.speed; // défilement à gauche
-  } else if (cursor.x > viewWidth - edgeZone && cameraX < decorWidth - viewWidth / 2) {
-    cameraX += cursor.speed; // défilement à droite
-    if (cameraX > decorWidth - viewWidth / 2) cameraX = decorWidth - viewWidth / 2;
+  //console.log("clavierUse :", clavierUse);
+  if (clavierUse === true) {
+    if (cursor.x < edgeZone - 17 && keys.left === false && keys.right === false) cursor.x += cursor.speed; // cursor reste sur place
+    if (cursor.x > viewWidth - edgeZone && keys.left === false && keys.right === false) cursor.x -= cursor.speed; // cursor reste sur place
+    if (cursor.x < edgeZone - 17 && cameraX > 0) {
+      cameraX -= cursor.speed; // défilement à gauche
+    } else if (cursor.x > viewWidth - edgeZone && cameraX < decorWidth - viewWidth / 2) {
+      cameraX += cursor.speed; // défilement à droite
+      if (cameraX > decorWidth - viewWidth / 2) cameraX = decorWidth - viewWidth / 2;
+    }
   }
-}}
+}
 function updateSpriteAnimation(deltaMs) {
   // si la caméra a bougé, faire avancer l'animation
   if (cameraX !== exCamera) {
