@@ -1,6 +1,6 @@
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
-let WIDTH = Math.min(window.innerWidth-10, 500);
+let WIDTH = Math.min(window.innerWidth - 10, 500);
 let HEIGHT = 500;
 //Applique la taille interne authentique
 canvas.width = WIDTH;
@@ -108,7 +108,7 @@ async function Run() {
     ctx.fillStyle = 'rgba(0,0,0,0.8)';
     //ctx.fillRect(0, 203, WIDTH, HEIGHT);
     await fadeOutLogo(50);
-   drawZoomOscill(images[3], 1);// ctx.drawImage(images[3], -WIDTH / 2, 0);
+    drawZoomOscill(images[3], 1);// ctx.drawImage(images[3], -WIDTH / 2, 0);
     ctx.fillStyle = 'rgba(0,0,0,0.8)';
     //  ctx.fillRect(0, 203, WIDTH, HEIGHT);
     await fadeOutLogo(50);
@@ -170,7 +170,7 @@ async function Run() {
       paused = !paused;   // ou paused = !paused pour toggle
       console.log("Toggle pause !");
     });
-    createButton("Esp:Courir",4,() => {keys.space=true;})
+    createButton("Esp:Courir", 4, () => { keys.space = true; })
     //userInactif();
     function userInactif() {
       // Aucune activité utilisateur (clavier et tactile) donne true dans isImmobile
@@ -199,7 +199,7 @@ async function Run() {
         if (t < 1) requestAnimationFrame(loop);  // arrêt automatique
       }
     }
-    
+
   }
   function waitForUserStart() {
     document.addEventListener("keydown", keyStart);
@@ -303,7 +303,7 @@ function fadeOutLogo(duration = 1500) {
       if (!start) start = timestamp;
       const progress = Math.min((timestamp - start) / duration, 1);
       // dessine le logo
-     drawZoomOscill(images[3], 1); //ctx.drawImage(images[3], 0, 0);
+      drawZoomOscill(images[3], 1); //ctx.drawImage(images[3], 0, 0);
       // couche noire qui augmente
       ctx.fillStyle = `rgba(0,0,0,${progress})`;
       ctx.fillRect(0, 0, WIDTH, HEIGHT);
@@ -423,15 +423,15 @@ async function chargMedia() {
   console.log("Tous les médias (images + sons) sont prêts !");
 }
 function drawZoomOscill(img, zoomOscill, angle = 0) {
-      const cx = WIDTH / 2;
-      const cy = HEIGHT / 2;
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.rotate(angle);
-      ctx.scale(zoomOscill, zoomOscill);
-      ctx.drawImage(img, -WIDTH / 2, -HEIGHT / 2, WIDTH, HEIGHT);
-      ctx.restore();
-    }
+  const cx = WIDTH / 2;
+  const cy = HEIGHT / 2;
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(angle);
+  ctx.scale(zoomOscill, zoomOscill);
+  ctx.drawImage(img, -WIDTH / 2, -HEIGHT / 2, WIDTH, HEIGHT);
+  ctx.restore();
+}
 function showStartScreen() {
   ctx.fillStyle = "black";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
