@@ -16,18 +16,22 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-
+            touch-action: none;
             height: 100vh;
             text-align: center;
+            padding: 5px;
         }
 
         canvas {
-            width: 100vw;
+            width: 100%;
             height: auto;
             /* hauteur proportionnelle */
             max-width: 500px;
             image-rendering: pixelated;
             border: 2px solid #444;
+            /*margin-left:15px;
+      margin-right:15px;*/
+            display: block;
         }
 
         a {
@@ -53,7 +57,7 @@
     <!--<button id="start">Démarrer le jeu</button> -->
     <a href="EditSon.html">Éditeur de sample</a>
 
-    <script src="Alloill.js"></script>
+    <script src="AlloWill.js"></script>
 </body>
 
 </html>
