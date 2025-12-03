@@ -557,26 +557,29 @@ function moveTactile() {
     const speed = maxSpeed * touchDir.intensity;
     cursor.x += Math.cos(touchDir.angleTouch) * speed;
     cursor.y += Math.sin(touchDir.angleTouch) * speed;
-   // console.log("speed : ",speed);
-  console.log("cos(tDir.anglT)*spd:",Math.cos(touchDir.angleTouch) * speed);
+    // console.log("speed : ",speed);
+    console.log("cos(tDir.anglT)*spd:", Math.cos(touchDir.angleTouch) * speed);
   }
 }
 function screenWall() { //cursor{},viewWidth,HEIGHT
-  cursor.x = Math.max(-cursor.w, Math.min(viewWidth, cursor.x));
+  cursor.x = Math.max(0, Math.min(viewWidth - cursor.w, cursor.x));
   cursor.y = Math.max(0, Math.min(HEIGHT - cursor.h, cursor.y));
 }
 function antiDefilPerm() {
   //console.log("clavierUse :", clavierUse);
-//  if (clavierUse === true) {
-console.log("x:",cursor.x," vw:",viewWidth," W:",WIDTH," spd:",cursor.speed);
-    if (cursor.x < edgeZone - 17 && keys.left === false && keys.right === false) cursor.x += cursor.speed; // cursor reste sur place
-    if (cursor.x > viewWidth - edgeZone && keys.left === false && keys.right === false) cursor.x -= cursor.speed; // cursor reste sur place
-    if (cursor.x < edgeZone - 17 && cameraX > 0) 
-      cameraX -= cursor.speed; // défilement à gauche
-    if (cursor.x > viewWidth \2 - edgeZone && cameraX < decorWidth - viewWidth / 2) {
+  //  if (clavierUse === true) {
+  console.log("x:", cursor.x, " vw:", viewWidth, " W:", WIDTH, " spd:", cursor.speed);
+  if (cursor.x < edgeZone - 17 && keys.left === false && keys.right === false) cursor.x += cursor.speed; // cursor reste sur place
+  if (cursor.x > viewWidth - edgeZone && keys.left === false && keys.right === false) cursor.x -= cursor.speed; // cursor reste sur place
+  if (cursor.x < edgeZone - 17 && cameraX > 0) {
+    cameraX -= cursor.speed; // défilement à gauche
+  } else if (clavierUse && cursor.x > viewWidth - edgeZone && cameraX < decorWidth - viewWidth / 2) {
+    cameraX += cursor.speed; // défilement à droite clavier
+    if (!clavierUse && cursor.x > viewWidth / 2 - edgeZone && cameraX < decorWidth - viewWidth / 2) {
       cameraX += cursor.speed; // défilement à droite
-      if (cameraX > decorWidth - viewWidth / 2) cameraX = decorWidth - viewWidth / 2;
     }
+    if (cameraX > decorWidth - viewWidth / 2) cameraX = decorWidth - viewWidth / 2;
+  }
   //}
 }
 function Timer() {
@@ -603,10 +606,10 @@ function drawPauseOverlay() {
   ctx.fillRect(WIDTH * pourcBord / 100, HEIGHT * pourcBord / 100, WIDTH - (WIDTH * 2 * pourcBord / 100), HEIGHT - (HEIGHT * 2 * pourcBord / 100));
   ctx.fillStyle = "#015e0fff";
   ctx.font = "65px Georgia";
-  ctx.fillText("⏸ Pause ", WIDTH/2-140,(HEIGHT / 2) - 100);
+  ctx.fillText("⏸ Pause ", WIDTH / 2 - 140, (HEIGHT / 2) - 100);
   ctx.fillStyle = "#ff8400ff";
   ctx.font = "60px Georgia";
-  ctx.fillText("⏸ Pause ",  WIDTH/2-130, (HEIGHT / 2) - 95);
+  ctx.fillText("⏸ Pause ", WIDTH / 2 - 130, (HEIGHT / 2) - 95);
 }
 function writeLine(numLigne, text) {
   //const totalLignes = 10; // nombre total de lignes
