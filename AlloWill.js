@@ -27,6 +27,8 @@ let cameraX = 0;        // décalage horizontal de la "vue"
 let exCamera = cameraX;                     //
 const decorWidth = 1000; // largeur totale du décor
 const edgeZone = 30;// distance au bord où le scrolling commence
+let lastInputTime = 0;
+let inactiveDelay = 200; // ms avant de considérer le joueur inactif
 let clavierUse = false;
 ///////////    Recharge Partie   /////////////
 let rafId = null;
@@ -533,54 +535,78 @@ function handleTouch(e) {
   const rect = canvas.getBoundingClientRect();
   const x = touch.clientX - rect.left;
   const y = touch.clientY - rect.top;
+
   handlePointer(x, y);
-  // coordonnées relatives au centre
-  const dx = x - cursor.x; // WIDTH / 2;
-  const dy = y - cursor.y; //HEIGHT / 2;
+
+  const dx = x - cursor.x;
+  const dy = y - cursor.y;
+
   const dist = Math.hypot(dx, dy);
   const angleTouch = Math.atan2(dy, dx);
-  // on limite la distance max (500/2 = rayon max)
+
   const maxDist = WIDTH / 2;
-  const intensity = Math.min(dist / maxDist, 1); // entre 0 et 1
+  const intensity = Math.min(dist / maxDist+0.5, 1);
+
   touchDir = { angleTouch, intensity };
+
+  lastInputTime = performance.now();
 }
 function moveClavier() {
-  //const cursor = { x: WIDTH / 2, y: HEIGHT / 2, w: 16, h: 16, p: 3.1 };
+  if (keys.left || keys.right || keys.up || keys.down || keys.space) {
+    lastInputTime = performance.now();
+  }
+
   cursor.speed = keys.space ? vitesseCourse : maxSpeed;
-  if (keys.left) cursor.x -= vitesseLampe * cursor.speed;
+
+  if (keys.left)  cursor.x -= vitesseLampe * cursor.speed;
   if (keys.right) cursor.x += vitesseLampe * cursor.speed;
-  if (keys.up) cursor.y -= vitesseLampe * cursor.speed;
-  if (keys.down) cursor.y += vitesseLampe * cursor.speed;
+  if (keys.up)    cursor.y -= vitesseLampe * cursor.speed;
+  if (keys.down)  cursor.y += vitesseLampe * cursor.speed;
 }
 function moveTactile() {
-  if (touchDir) {
-    const speed = maxSpeed * touchDir.intensity;
-    cursor.x += Math.cos(touchDir.angleTouch) * speed;
-    cursor.y += Math.sin(touchDir.angleTouch) * speed;
-    // console.log("speed : ",speed);
-    console.log("cos(tDir.anglT)*spd:", Math.cos(touchDir.angleTouch) * speed);
-  }
+  if (!touchDir) return;
+
+  lastInputTime = performance.now();
+
+  const speed = maxSpeed * touchDir.intensity;
+  cursor.x += Math.cos(touchDir.angleTouch) * speed;
+  cursor.y += Math.sin(touchDir.angleTouch) * speed;
 }
 function screenWall() { //cursor{},viewWidth,HEIGHT
   cursor.x = Math.max(0, Math.min(viewWidth - cursor.w, cursor.x));
   cursor.y = Math.max(0, Math.min(HEIGHT - cursor.h, cursor.y));
 }
 function antiDefilPerm() {
-  //console.log("clavierUse :", clavierUse);
-  //  if (clavierUse === true) {
-  console.log("x:", cursor.x, " vw:", viewWidth, " W:", WIDTH, " spd:", cursor.speed);
-  if (cursor.x < edgeZone - 17 && keys.left === false && keys.right === false) cursor.x += cursor.speed; // cursor reste sur place
-  if (cursor.x > viewWidth - edgeZone && keys.left === false && keys.right === false) cursor.x -= cursor.speed; // cursor reste sur place
-  if (cursor.x < edgeZone - 17 && cameraX > 0) {
-    cameraX -= cursor.speed; // défilement à gauche
-  } else if (clavierUse && cursor.x > viewWidth - edgeZone && cameraX < decorWidth - viewWidth / 2) {
-    cameraX += cursor.speed; // défilement à droite clavier
-    if (!clavierUse && cursor.x > viewWidth / 2 - edgeZone && cameraX < decorWidth - viewWidth / 2) {
-      cameraX += cursor.speed; // défilement à droite
-    }
-    if (cameraX > decorWidth - viewWidth / 2) cameraX = decorWidth - viewWidth / 2;
+
+  const now = performance.now();
+  const isInactive = (now - lastInputTime) > inactiveDelay;
+console.log("vitLmp : ", vitesseLampe, " c.speed : ", cursor.speed);
+  // Si inactif → repousser le curseur hors des edgeZones
+  if (isInactive) {
+    if (cursor.x < edgeZone) cursor.x = edgeZone + 1;
+    if (cursor.x > viewWidth - edgeZone) cursor.x = viewWidth - edgeZone - 1;
+    return; // aucune tentative de scroll
   }
-  //}
+
+  // ----- ACTIVITÉ : SCROLL NORMAL -----
+
+  // 1. Garder le curseur visible dans l'écran
+  if (cursor.x < 0) cursor.x = 0;
+  if (cursor.x > viewWidth - cursor.w) cursor.x = viewWidth - cursor.w;
+
+  // 2. SCROLL GAUCHE
+  if (cursor.x < edgeZone && cameraX > 0) {
+    cameraX -= cursor.speed;
+    if (cameraX < 0) cameraX = 0;
+  }
+
+  // 3. SCROLL DROITE
+  if (cursor.x > viewWidth - edgeZone &&
+      cameraX < decorWidth - viewWidth/2){
+    cameraX += cursor.speed;
+    if (cameraX > decorWidth - viewWidth/2)
+      cameraX = decorWidth - viewWidth/2;
+  }
 }
 function Timer() {
   ctx.font = "20px Georgia";
