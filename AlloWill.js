@@ -17,7 +17,7 @@ let requiredTasks = 3;
 const keys = { left: false, right: false, up: false, down: false, space: false };
 //////function GestionTactile() {
 let touchDir = null; // direction du doigt (angle, distance) 
-let maxSpeed = 2;    // vitesse max du déplacement
+let maxSpeed = 4;    // vitesse max du déplacement
 // --- CURSOR ---
 const cursor = { x: WIDTH / 2, y: HEIGHT / 2, w: 16, h: 16, speed: 1.5 };
 let vitesseLampe = 4; // multiplicateur de vitesse lampe de poche
@@ -259,6 +259,7 @@ function update() {
   screenWall();
   // Check "tâches"
   incTaskOrWin(); //cursor{}, tasksDone, requiredTasks, endGame()   
+  //Demi-tour perso
   if (cursor.x >= WIDTH / 2 && skinPlayer == images[7]) skinPlayer = images[6];
   if (cursor.x < WIDTH / 2 && skinPlayer == images[6]) skinPlayer = images[7];
   /*  function FlipH(img) {
@@ -544,7 +545,7 @@ function handleTouch(e) {
   touchDir = { angleTouch, intensity };
 }
 function moveClavier() {
-  //const cursor = { x: WIDTH / 2, y: HEIGHT / 2, w: 16, h: 16, speed: 3.1 };
+  //const cursor = { x: WIDTH / 2, y: HEIGHT / 2, w: 16, h: 16, p: 3.1 };
   cursor.speed = keys.space ? vitesseCourse : maxSpeed;
   if (keys.left) cursor.x -= vitesseLampe * cursor.speed;
   if (keys.right) cursor.x += vitesseLampe * cursor.speed;
@@ -556,11 +557,27 @@ function moveTactile() {
     const speed = maxSpeed * touchDir.intensity;
     cursor.x += Math.cos(touchDir.angleTouch) * speed;
     cursor.y += Math.sin(touchDir.angleTouch) * speed;
+   // console.log("speed : ",speed);
+  console.log("cos(tDir.anglT)*spd:",Math.cos(touchDir.angleTouch) * speed);
   }
 }
 function screenWall() { //cursor{},viewWidth,HEIGHT
-  cursor.x = Math.max(0, Math.min(viewWidth - cursor.w, cursor.x));
+  cursor.x = Math.max(-cursor.w, Math.min(viewWidth, cursor.x));
   cursor.y = Math.max(0, Math.min(HEIGHT - cursor.h, cursor.y));
+}
+function antiDefilPerm() {
+  //console.log("clavierUse :", clavierUse);
+//  if (clavierUse === true) {
+console.log("x:",cursor.x," vw:",viewWidth," W:",WIDTH," spd:",cursor.speed);
+    if (cursor.x < edgeZone - 17 && keys.left === false && keys.right === false) cursor.x += cursor.speed; // cursor reste sur place
+    if (cursor.x > viewWidth - edgeZone && keys.left === false && keys.right === false) cursor.x -= cursor.speed; // cursor reste sur place
+    if (cursor.x < edgeZone - 17 && cameraX > 0) 
+      cameraX -= cursor.speed; // défilement à gauche
+    if (cursor.x > viewWidth \2 - edgeZone && cameraX < decorWidth - viewWidth / 2) {
+      cameraX += cursor.speed; // défilement à droite
+      if (cameraX > decorWidth - viewWidth / 2) cameraX = decorWidth - viewWidth / 2;
+    }
+  //}
 }
 function Timer() {
   ctx.font = "20px Georgia";
@@ -586,10 +603,10 @@ function drawPauseOverlay() {
   ctx.fillRect(WIDTH * pourcBord / 100, HEIGHT * pourcBord / 100, WIDTH - (WIDTH * 2 * pourcBord / 100), HEIGHT - (HEIGHT * 2 * pourcBord / 100));
   ctx.fillStyle = "#015e0fff";
   ctx.font = "65px Georgia";
-  ctx.fillText("⏸ Pause ", 120, (HEIGHT / 2) - 100);
+  ctx.fillText("⏸ Pause ", WIDTH/2-140,(HEIGHT / 2) - 100);
   ctx.fillStyle = "#ff8400ff";
   ctx.font = "60px Georgia";
-  ctx.fillText("⏸ Pause ", 130, (HEIGHT / 2) - 95);
+  ctx.fillText("⏸ Pause ",  WIDTH/2-130, (HEIGHT / 2) - 95);
 }
 function writeLine(numLigne, text) {
   //const totalLignes = 10; // nombre total de lignes
@@ -638,19 +655,6 @@ function handlePointer(x, y) {
     if (x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h) {
       if (b.action) b.action();
       return;
-    }
-  }
-}
-function antiDefilPerm() {
-  //console.log("clavierUse :", clavierUse);
-  if (clavierUse === true) {
-    if (cursor.x < edgeZone - 17 && keys.left === false && keys.right === false) cursor.x += cursor.speed; // cursor reste sur place
-    if (cursor.x > viewWidth - edgeZone && keys.left === false && keys.right === false) cursor.x -= cursor.speed; // cursor reste sur place
-    if (cursor.x < edgeZone - 17 && cameraX > 0) {
-      cameraX -= cursor.speed; // défilement à gauche
-    } else if (cursor.x > viewWidth - edgeZone && cameraX < decorWidth - viewWidth / 2) {
-      cameraX += cursor.speed; // défilement à droite
-      if (cameraX > decorWidth - viewWidth / 2) cameraX = decorWidth - viewWidth / 2;
     }
   }
 }
