@@ -17,10 +17,10 @@ let requiredTasks = 3;
 const keys = { left: false, right: false, up: false, down: false, space: false };
 //////function GestionTactile() {
 let touchDir = null; // direction du doigt (angle, distance) 
-let maxSpeed = 4;    // vitesse max du déplacement
+let maxSpeed = 1.5;    // vitesse max du déplacement
 // --- CURSOR ---
 const cursor = { x: WIDTH / 2, y: HEIGHT / 2, w: 16, h: 16, speed: 1.5 };
-let vitesseLampe = 4; // multiplicateur de vitesse lampe de poche
+let vitesseLampe = 6; // multiplicateur de vitesse lampe de poche
 let vitesseCourse = 6; // vitesse en courant
 //////////// Variables pour le défilement/////////////
 let cameraX = 0;        // décalage horizontal de la "vue"
@@ -41,7 +41,7 @@ let lastTimestamp = performance.now();
 let spriteFrame = 0;
 const spriteFrameCount = 5;       // ajuster si nécessaire (nombre d'images dans la spritesheet)
 let spriteAnimTimer = 0;
-const spriteAnimInterval = 100;   // ms par frame
+const spriteAnimInterval = 200;   // ms par frame
 let spriteFrameWidth = 200;       // valeurs par défaut, recalculées après chargement
 let spriteFrameHeight = 300;
 //Options
@@ -296,7 +296,7 @@ function changeGame() { //  marche pas !!
   ctx.fillStyle = "#ffffffff";
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
   for (let i = 0; i < 10000; i += 1) { }
-  console.log("vitLmp : ", vitesseLampe, " c.speed : ", cursor.speed);
+  //console.log("vitLmp : ", vitesseLampe, " c.speed : ", cursor.speed, "framMS : ", spriteAnimTimer);
 }
 
 function fadeOutLogo(duration = 1500) {
@@ -545,7 +545,7 @@ function handleTouch(e) {
   const angleTouch = Math.atan2(dy, dx);
 
   const maxDist = WIDTH / 2;
-  const intensity = Math.min(dist / maxDist+0.5, 1);
+  const intensity = Math.min(dist / maxDist + 0.5, 1);
 
   touchDir = { angleTouch, intensity };
 
@@ -558,10 +558,10 @@ function moveClavier() {
 
   cursor.speed = keys.space ? vitesseCourse : maxSpeed;
 
-  if (keys.left)  cursor.x -= vitesseLampe * cursor.speed;
+  if (keys.left) cursor.x -= vitesseLampe * cursor.speed;
   if (keys.right) cursor.x += vitesseLampe * cursor.speed;
-  if (keys.up)    cursor.y -= vitesseLampe * cursor.speed;
-  if (keys.down)  cursor.y += vitesseLampe * cursor.speed;
+  if (keys.up) cursor.y -= vitesseLampe * cursor.speed;
+  if (keys.down) cursor.y += vitesseLampe * cursor.speed;
 }
 function moveTactile() {
   if (!touchDir) return;
@@ -580,7 +580,7 @@ function antiDefilPerm() {
 
   const now = performance.now();
   const isInactive = (now - lastInputTime) > inactiveDelay;
-console.log("vitLmp : ", vitesseLampe, " c.speed : ", cursor.speed);
+  console.log("vitLmp : ", vitesseLampe, " c.speed : ", cursor.speed, "framMS : ", spriteAnimTimer);
   // Si inactif → repousser le curseur hors des edgeZones
   if (isInactive) {
     if (cursor.x < edgeZone) cursor.x = edgeZone + 1;
@@ -602,10 +602,10 @@ console.log("vitLmp : ", vitesseLampe, " c.speed : ", cursor.speed);
 
   // 3. SCROLL DROITE
   if (cursor.x > viewWidth - edgeZone &&
-      cameraX < decorWidth - viewWidth/2){
+    cameraX < decorWidth - viewWidth / 2) {
     cameraX += cursor.speed;
-    if (cameraX > decorWidth - viewWidth/2)
-      cameraX = decorWidth - viewWidth/2;
+    if (cameraX > decorWidth - viewWidth / 2)
+      cameraX = decorWidth - viewWidth / 2;
   }
 }
 function Timer() {
@@ -691,7 +691,7 @@ function updateSpriteAnimation(deltaMs) {
   // si la caméra a bougé, faire avancer l'animation
   if (cameraX !== exCamera) {
     spriteAnimTimer += deltaMs;
-    if (spriteAnimTimer >= spriteAnimInterval) {
+    if (spriteAnimTimer >= spriteAnimInterval / (cursor.speed * cursor.speed)) {
       const step = Math.floor(spriteAnimTimer / spriteAnimInterval);
       spriteFrame = (spriteFrame + step) % spriteFrameCount;
       spriteAnimTimer %= spriteAnimInterval;
