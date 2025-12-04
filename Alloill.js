@@ -17,16 +17,18 @@ let requiredTasks = 3;
 const keys = { left: false, right: false, up: false, down: false, space: false };
 //////function GestionTactile() {
 let touchDir = null; // direction du doigt (angle, distance) 
-let maxSpeed = 2;    // vitesse max du déplacement
+let maxSpeed = 1.5;    // vitesse max du déplacement
 // --- CURSOR ---
 const cursor = { x: WIDTH / 2, y: HEIGHT / 2, w: 16, h: 16, speed: 1.5 };
-let vitesseLampe = 4; // multiplicateur de vitesse lampe de poche
+let vitesseLampe = 6; // multiplicateur de vitesse lampe de poche
 let vitesseCourse = 6; // vitesse en courant
 //////////// Variables pour le défilement/////////////
 let cameraX = 0;        // décalage horizontal de la "vue"
 let exCamera = cameraX;                     //
 const decorWidth = 1000; // largeur totale du décor
 const edgeZone = 30;// distance au bord où le scrolling commence
+let lastInputTime = 0;
+let inactiveDelay = 200; // ms avant de considérer le joueur inactif
 let clavierUse = false;
 ///////////    Recharge Partie   /////////////
 let rafId = null;
@@ -39,7 +41,7 @@ let lastTimestamp = performance.now();
 let spriteFrame = 0;
 const spriteFrameCount = 5;       // ajuster si nécessaire (nombre d'images dans la spritesheet)
 let spriteAnimTimer = 0;
-const spriteAnimInterval = 100;   // ms par frame
+const spriteAnimInterval = 200;   // ms par frame
 let spriteFrameWidth = 200;       // valeurs par défaut, recalculées après chargement
 let spriteFrameHeight = 300;
 //Options
@@ -259,6 +261,7 @@ function update() {
   screenWall();
   // Check "tâches"
   incTaskOrWin(); //cursor{}, tasksDone, requiredTasks, endGame()   
+  //Demi-tour perso
   if (cursor.x >= WIDTH / 2 && skinPlayer == images[7]) skinPlayer = images[6];
   if (cursor.x < WIDTH / 2 && skinPlayer == images[6]) skinPlayer = images[7];
   /*  function FlipH(img) {
@@ -293,7 +296,7 @@ function changeGame() { //  marche pas !!
   ctx.fillStyle = "#ffffffff";
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
   for (let i = 0; i < 10000; i += 1) { }
-  console.log("vitLmp : ", vitesseLampe, " c.speed : ", cursor.speed);
+  //console.log("vitLmp : ", vitesseLampe, " c.speed : ", cursor.speed, "framMS : ", spriteAnimTimer);
 }
 
 function fadeOutLogo(duration = 1500) {
@@ -532,35 +535,78 @@ function handleTouch(e) {
   const rect = canvas.getBoundingClientRect();
   const x = touch.clientX - rect.left;
   const y = touch.clientY - rect.top;
+
   handlePointer(x, y);
-  // coordonnées relatives au centre
-  const dx = x - cursor.x; // WIDTH / 2;
-  const dy = y - cursor.y; //HEIGHT / 2;
+
+  const dx = x - cursor.x;
+  const dy = y - cursor.y;
+
   const dist = Math.hypot(dx, dy);
   const angleTouch = Math.atan2(dy, dx);
-  // on limite la distance max (500/2 = rayon max)
+
   const maxDist = WIDTH / 2;
-  const intensity = Math.min(dist / maxDist, 1); // entre 0 et 1
+  const intensity = Math.min(dist / maxDist + 0.5, 1);
+
   touchDir = { angleTouch, intensity };
+
+  lastInputTime = performance.now();
 }
 function moveClavier() {
-  //const cursor = { x: WIDTH / 2, y: HEIGHT / 2, w: 16, h: 16, speed: 3.1 };
+  if (keys.left || keys.right || keys.up || keys.down || keys.space) {
+    lastInputTime = performance.now();
+  }
+
   cursor.speed = keys.space ? vitesseCourse : maxSpeed;
+
   if (keys.left) cursor.x -= vitesseLampe * cursor.speed;
   if (keys.right) cursor.x += vitesseLampe * cursor.speed;
   if (keys.up) cursor.y -= vitesseLampe * cursor.speed;
   if (keys.down) cursor.y += vitesseLampe * cursor.speed;
 }
 function moveTactile() {
-  if (touchDir) {
-    const speed = maxSpeed * touchDir.intensity;
-    cursor.x += Math.cos(touchDir.angleTouch) * speed;
-    cursor.y += Math.sin(touchDir.angleTouch) * speed;
-  }
+  if (!touchDir) return;
+
+  lastInputTime = performance.now();
+
+  const speed = maxSpeed * vitesseLampe*touchDir.intensity;
+  cursor.x += Math.cos(touchDir.angleTouch) * speed;
+  cursor.y += Math.sin(touchDir.angleTouch) * speed;
 }
 function screenWall() { //cursor{},viewWidth,HEIGHT
   cursor.x = Math.max(0, Math.min(viewWidth - cursor.w, cursor.x));
   cursor.y = Math.max(0, Math.min(HEIGHT - cursor.h, cursor.y));
+}
+function antiDefilPerm() {
+
+  const now = performance.now();
+  const isInactive = (now - lastInputTime) > inactiveDelay;
+  console.log("vitLmp : ", vitesseLampe, " c.speed : ", cursor.speed, "framMS : ", spriteAnimTimer);
+  // Si inactif → repousser le curseur hors des edgeZones
+  if (isInactive) {
+    if (cursor.x < edgeZone) cursor.x = edgeZone + 1;
+    if (cursor.x > viewWidth - edgeZone) cursor.x = viewWidth - edgeZone - 1;
+    return; // aucune tentative de scroll
+  }
+
+  // ----- ACTIVITÉ : SCROLL NORMAL -----
+
+  // 1. Garder le curseur visible dans l'écran
+  if (cursor.x < 0) cursor.x = 0;
+  if (cursor.x > viewWidth - cursor.w) cursor.x = viewWidth - cursor.w;
+
+  // 2. SCROLL GAUCHE
+  if (cursor.x < edgeZone && cameraX > 0) {
+    cameraX -= cursor.speed;
+    if (cameraX < 0) cameraX = 0;
+  }
+
+  // 3. SCROLL DROITE
+  if (cursor.x > viewWidth - edgeZone &&
+    cameraX < decorWidth - viewWidth / 2) {
+    cameraX += cursor.speed;
+    if (cameraX > decorWidth - viewWidth / 2)
+      cameraX = decorWidth - viewWidth / 2;
+  }
 }
 function Timer() {
   ctx.font = "20px Georgia";
@@ -586,10 +632,10 @@ function drawPauseOverlay() {
   ctx.fillRect(WIDTH * pourcBord / 100, HEIGHT * pourcBord / 100, WIDTH - (WIDTH * 2 * pourcBord / 100), HEIGHT - (HEIGHT * 2 * pourcBord / 100));
   ctx.fillStyle = "#015e0fff";
   ctx.font = "65px Georgia";
-  ctx.fillText("⏸ Pause ", 120, (HEIGHT / 2) - 100);
+  ctx.fillText("⏸ Pause ", WIDTH / 2 - 140, (HEIGHT / 2) - 100);
   ctx.fillStyle = "#ff8400ff";
   ctx.font = "60px Georgia";
-  ctx.fillText("⏸ Pause ", 130, (HEIGHT / 2) - 95);
+  ctx.fillText("⏸ Pause ", WIDTH / 2 - 130, (HEIGHT / 2) - 95);
 }
 function writeLine(numLigne, text) {
   //const totalLignes = 10; // nombre total de lignes
@@ -641,24 +687,11 @@ function handlePointer(x, y) {
     }
   }
 }
-function antiDefilPerm() {
-  //console.log("clavierUse :", clavierUse);
-  if (clavierUse === true) {
-    if (cursor.x < edgeZone - 17 && keys.left === false && keys.right === false) cursor.x += cursor.speed; // cursor reste sur place
-    if (cursor.x > viewWidth - edgeZone && keys.left === false && keys.right === false) cursor.x -= cursor.speed; // cursor reste sur place
-    if (cursor.x < edgeZone - 17 && cameraX > 0) {
-      cameraX -= cursor.speed; // défilement à gauche
-    } else if (cursor.x > viewWidth - edgeZone && cameraX < decorWidth - viewWidth / 2) {
-      cameraX += cursor.speed; // défilement à droite
-      if (cameraX > decorWidth - viewWidth / 2) cameraX = decorWidth - viewWidth / 2;
-    }
-  }
-}
 function updateSpriteAnimation(deltaMs) {
   // si la caméra a bougé, faire avancer l'animation
   if (cameraX !== exCamera) {
     spriteAnimTimer += deltaMs;
-    if (spriteAnimTimer >= spriteAnimInterval) {
+    if (spriteAnimTimer >= spriteAnimInterval / (cursor.speed * cursor.speed)) {
       const step = Math.floor(spriteAnimTimer / spriteAnimInterval);
       spriteFrame = (spriteFrame + step) % spriteFrameCount;
       spriteAnimTimer %= spriteAnimInterval;

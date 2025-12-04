@@ -568,7 +568,7 @@ function moveTactile() {
 
   lastInputTime = performance.now();
 
-  const speed = maxSpeed * touchDir.intensity;
+  const speed = maxSpeed * vitesseLampe*touchDir.intensity;
   cursor.x += Math.cos(touchDir.angleTouch) * speed;
   cursor.y += Math.sin(touchDir.angleTouch) * speed;
 }
