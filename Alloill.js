@@ -86,15 +86,161 @@ const srcList = [
 //skinPlayer.height = images[6].height;
 let loaded = 0;
 //let PlayerImg = null; // <--- global !
+///////////////  ITEMS  /////////////////////////////
+const env = {
+  scene01: {
+    width: 1000,
+    decorSrc: images[0],
+    items: {
+      it01L00: {
+        type: "loot",
+        x: 750,
+        y: 250,
+        w: 10,
+        h: 10,
+        view: false,
+        amount: 1,
+        interactWith: "player"
+      },
+
+      it01U00: {
+        type: "use",
+        x: 750,
+        y: 100,
+        w: 10,
+        h: 10,
+        view: false,
+        interactWith: "it01L00",
+        action: "unlockSomething"
+      },
+
+      it01D00: {
+        type: "decor",
+        x: 240,
+        y: 100,
+        w: 10,
+        h: 10,
+        view: false,
+        collision: true
+      }
+    }
+  }
+};
+class ItemManager {
+  constructor(sceneData) {
+    this.items = {};
+    for (const [id, data] of Object.entries(sceneData.items)) {
+      this.items[id] = new Item(id, data);
+    }
+  }
+  draw(ctx) {
+    for (const item of Object.values(this.items)) {
+      item.draw(ctx);
+    }
+  }
+  trigger(item) {
+    if (item.type === "loot") {
+      console.log("Loot :", item.id);
+      item.view = false;
+    }
+    if (item.type === "use") {
+      console.log("Use :", item.id);
+      if (item.interactWith && this.items[item.interactWith]) {
+        this.items[item.interactWith].view = true;
+      }
+      if (item.action) this.doAction(item.action);
+    }
+  }
+  doAction(name) {
+    if (name === "unlockSomething") {
+      console.log("ACTION → Déverrouillage !");
+    }
+  }
+
+  /*  handleClick(x, y) {
+    for (const item of Object.values(this.items)) {
+      if (item.view && item.contains(x, y)) {
+        this.trigger(item);
+      }
+    }
+  }*/
+}
+class Item {
+  constructor(id, data) {
+    this.id = id;
+    Object.assign(this, data);
+  }
+  draw(ctx) {
+    if (!this.view) return;
+    ctx.fillStyle = "orange";
+    ctx.fillRect(this.x, this.y, this.w, this.h);
+  }
+  contains(px, py) {
+    return px >= this.x && px <= this.x + this.w &&
+      py >= this.y && py <= this.y + this.h;
+  }
+}
+const scene = env.scene01;
+const itemManager = new ItemManager(scene); // -> Uncaught ReferenceError: Cannot access 'ItemManager' before initialization
+
+
+
+document.addEventListener("keydown", e => {
+  if (e.key === "b" || e.key === "B") itemManager.doAction();
+});
+/*canvas.addEventListener("touchstart", e => {
+  itemManager.triggerAction();
+
+canvas.addEventListener("click", (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+
+  itemManager.handleClick(x, y);
+});*/
+/*const env={
+  scene01:{src:images[0],width:1000,
+    item:{
+      use:{
+        it01U00:{src:null,x:750,y:100,w:10,h:10,view:false,
+          action:[conslog(),conslog("it01L00")]
+        },
+        it01U01:{src:null,x:900,y:100,w:10,h:10,view:false,
+          action:[conslog()]
+        }
+      },
+      loot:{
+        it01L00:{src:null,x:750,y:250,w:10,h:10,view:true,lootNb:1,
+          with:"it01U00"
+        },
+        it01L01:{src:null,x:900,y:250,w:10,h:10,view:false,lootNb:null,
+          with:"player"
+        }
+      },
+      decor:{
+        it01D00:{src:null,x:240,y:100,w:10,h:10,view:false},
+        it01D01:{src:null,x:490,y:100,w:10,h:10,view:false}
+      }
+    }
+  }
+}
+function conslog(itName=null){
+  if (itName!=null){
+    console.log("items associés : ",env.scene01.item.loot.${itName})
+  } else {
+    console.log("item utilisés")
+  }
+}*/
 console.log("Variables déclarées !")
 showStartScreen();
 chargMedia();
 skinPlayer = images[6];
 //PlayerImg = images[1];
 console.log("Validation...");
-Run();
+Run(env);
 function breakRun(projet) { return new Promise(License => setTimeout(License, projet)); }
-async function Run() {
+async function Run(env) {
+  console.log(env.scene01); // OK
   waitForUserStart();
   console.log("logo :");
   await breakRun(457);
@@ -357,6 +503,7 @@ function draw() {
     0, 0, WIDTH, HEIGHT  // position sur le canvas
   );// Dessiner uniquement la portion visible du décor*/
   ctx.globalAlpha = 1;
+  itemManager.draw(ctx); // dessin décor + items
   ctx.save();
   // Animation sprite sheet (images[6])
   // sourceX, sourceY, sourceW, sourceH, dx, dy, dw, dh
@@ -568,7 +715,7 @@ function moveTactile() {
 
   lastInputTime = performance.now();
 
-  const speed = maxSpeed * vitesseLampe*touchDir.intensity;
+  const speed = maxSpeed * vitesseLampe * touchDir.intensity;
   cursor.x += Math.cos(touchDir.angleTouch) * speed;
   cursor.y += Math.sin(touchDir.angleTouch) * speed;
 }
