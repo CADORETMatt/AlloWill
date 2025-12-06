@@ -87,6 +87,7 @@ const srcList = [
 let loaded = 0;
 //let PlayerImg = null; // <--- global !
 ///////////////  ITEMS  /////////////////////////////
+let hoveredItem = null;  // item actuellement sous le curseur
 const env = [
   {
     name: "scene01",
@@ -124,6 +125,11 @@ class ItemManager {
   draw(ctx) {
     for (const item of Object.values(this.items)) {
       item.draw(ctx);
+      if (item === hoveredItem) { // AFFICHER LE CADRE si le curseur est dessus
+        ctx.strokeStyle = "yellow";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(item.x, item.y, item.w, item.h);
+      }
     }
   }
   trigger(item) {
@@ -183,10 +189,53 @@ class Item {
 const scene = env[0];
 const itemManager = new ItemManager(scene);
 
-
+function updateHover(cursorX, cursorY) {
+  hoveredItem = null;
+  for (const item of Object.values(itemManager.items)) {
+    if (item.view && item.contains(cursorX, cursorY)) {
+      hoveredItem = item;
+      break;
+    }
+  }
+}
 document.addEventListener("keydown", e => {
-  if (e.key === "b" || e.key === "B") itemManager.doAction();
+  if (e.key === "b" || e.key === "B") {
+     if (hoveredItem) {
+      itemManager.trigger(hoveredItem);
+     }
+     itemManager.doAction();
+  }
 });
+
+canvas.addEventListener("touchstart", (e) => {
+  const touch = e.touches[0];
+  handleTouch(touch.clientX, touch.clientY);
+});
+canvas.addEventListener("touchmove", (e) => {
+  const touch = e.touches[0];
+  const rect = canvas.getBoundingClientRect();
+  const x = touch.clientX - rect.left;
+  const y = touch.clientY - rect.top;
+  //updateHover(x, y); // réutilise ta fonction PC
+});
+function handleTouch(clientX, clientY) {
+  const rect = canvas.getBoundingClientRect();
+  const x = clientX - rect.left;
+  const y = clientY - rect.top;
+  // 1. Détecter si on est sur un item
+  hoveredItem = null;
+  for (const item of Object.values(itemManager.items)) {
+    if (item.view && item.contains(x, y)) {
+      hoveredItem = item;
+      break;
+    }
+  }
+  // 2. Si un item est touché → effectuer l’action
+  if (hoveredItem) {
+    itemManager.trigger(hoveredItem);
+  }
+}
+
 /*canvas.addEventListener("touchstart", e => {
   itemManager.triggerAction();
 
@@ -239,7 +288,7 @@ console.log("Validation...");
 Run(env);
 function breakRun(projet) { return new Promise(License => setTimeout(License, projet)); }
 async function Run(env) {
-  console.log(env.scene01); // OK
+  console.log(env[0]); // OK
   waitForUserStart();
   console.log("logo :");
   await breakRun(457);
@@ -404,6 +453,7 @@ function update() {
   moveTactile();  // tactile orienté
   antiDefilPerm();
   screenWall();
+  updateHover(cursor.x, cursor.y);
   // Check "tâches"
   incTaskOrWin(); //cursor{}, tasksDone, requiredTasks, endGame()   
   //Demi-tour perso
