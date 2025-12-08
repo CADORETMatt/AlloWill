@@ -95,8 +95,8 @@ const env = [
     src: images[0],
     items: [
       {
-        name: "clef01", type: "loot", view: false,
-        x: 750, y: 250, w: 10, h: 10,
+        name: "clef01", type: "loot", view: false, posseded: false,
+        x: 305, y: 250, w: 20, h: 20,
         amount: 1, interactWith: "player"
       },
       {
@@ -108,7 +108,7 @@ const env = [
       {
         name: "placard01", type: "decor", view: true,
         x: 305, y: 316, w: 65, h: 28,
-        interactWith: "clef01", action: "lootItem", collision: false
+        spawn: "clef01", action: "lootItem", collision: false
       },
     ]
   }
@@ -134,7 +134,7 @@ class ItemManager {
   }
   trigger(item) {
     if (!item) return;
-    if (item.type === "loot") {
+    if (item.type === "loot") { //Loot = Récup
       console.log("Loot :", item.id);
       item.view = false;
     }
@@ -145,6 +145,14 @@ class ItemManager {
       }
       if (item.action) this.doAction(item.action);
     }
+    if (item.type === "decor") {
+      console.log("Decor :", item.id);
+      if (item.spawn) {
+        this.items[item.spawn].view = true;
+        item.view = false;
+      }
+      if (item.action) this.doAction(item.action);
+    }
   }
   doAction(name) {
     switch (name) {
@@ -152,14 +160,13 @@ class ItemManager {
         console.log("ACTION → Déverrouillage !");
         break;
       case "lootItem":
-        console.log("Objet trouvé !");
+        console.log("Objet ", this.items.spawn, " trouvé dans ", this.items.name, " !");
         //        item.interactWith: "clef01"
         break;
       default:
         console.warn("Action inconnue :", name);
     }
   }
-
   /*  handleClick(x, y) {
     for (const item of Object.values(this.items)) {
       if (item.view && item.contains(x, y)) {
@@ -200,10 +207,10 @@ function updateHover(cursorX, cursorY) {
 }
 document.addEventListener("keydown", e => {
   if (e.key === "b" || e.key === "B") {
-     if (hoveredItem) {
+    if (hoveredItem) {
       itemManager.trigger(hoveredItem);
-     }
-     itemManager.doAction();
+    }
+    itemManager.doAction();
   }
 });
 
