@@ -17,6 +17,8 @@ let requiredTasks = 3;
 const keys = { left: false, right: false, up: false, down: false, space: false };
 //////function GestionTactile() {
 let touchDir = null; // direction du doigt (angle, distance) 
+let touchStartX = null;
+let touchStartY = null;
 let maxSpeed = 1.5;    // vitesse max du déplacement
 // --- CURSOR ---
 const cursor = { x: WIDTH / 2, y: HEIGHT / 2, w: 16, h: 16, speed: 1.5 };
@@ -214,9 +216,9 @@ document.addEventListener("keydown", e => {
   }
 });
 
-canvas.addEventListener("touchstart", (e) => {
-  const touch = e.touches[0];
-  handleTouch(touch.clientX, touch.clientY);
+/*canvas.addEventListener("touchstart", (e) => {
+const touch = e.touches[0];
+ handleTouch(touch.clientX, touch.clientY);
 });
 canvas.addEventListener("touchmove", (e) => {
   const touch = e.touches[0];
@@ -224,8 +226,8 @@ canvas.addEventListener("touchmove", (e) => {
   const x = touch.clientX - rect.left;
   const y = touch.clientY - rect.top;
   //updateHover(x, y); // réutilise ta fonction PC
-});
-function handleTouch(clientX, clientY) {
+});*/
+/*function handleTouch(clientX, clientY) {
   const rect = canvas.getBoundingClientRect();
   const x = clientX - rect.left;
   const y = clientY - rect.top;
@@ -241,7 +243,7 @@ function handleTouch(clientX, clientY) {
   if (hoveredItem) {
     itemManager.trigger(hoveredItem);
   }
-}
+}*/
 
 /*canvas.addEventListener("touchstart", e => {
   itemManager.triggerAction();
@@ -719,9 +721,12 @@ function GestionClavier() {  // const keys = { left: false, right: false, up: fa
   });
 }
 function GestionTactile() {
-  canvas.addEventListener("touchstart", handleTouch);
-  canvas.addEventListener("touchmove", handleTouch);
-  canvas.addEventListener("touchend", () => touchDir = null);
+  canvas.addEventListener("touchstart", handleTouch,{passive:false});
+  canvas.addEventListener("touchmove", handleTouch,{passive:false});
+  canvas.addEventListener("touchend", () =>{ touchDir = null;
+      touchStartX=null;
+      touchStartY=null;
+  });
   console.log("tactile ok");
 }
 function ecouteTouchePause() {
@@ -740,9 +745,15 @@ function handleTouch(e) {
   const y = touch.clientY - rect.top;
 
   handlePointer(x, y);
+ 
+ //si 1er contact -> fixer le centre
+ if(touchStartX===null){
+     touchStartX=x;
+     touchStartY=y;
+ }
 
-  const dx = x - cursor.x;
-  const dy = y - cursor.y;
+  const dx = x - touchStartX; //cursor.x;
+  const dy = y - touchStartY; //cursor.y;
 
   const dist = Math.hypot(dx, dy);
   const angleTouch = Math.atan2(dy, dx);
@@ -753,6 +764,18 @@ function handleTouch(e) {
   touchDir = { angleTouch, intensity };
 
   lastInputTime = performance.now();
+  // 1. Détecter si on est sur un item
+  hoveredItem = null;
+  for (const item of Object.values(itemManager.items)) {
+    if (item.view && item.contains(x, y)) {
+      hoveredItem = item;
+      break;
+    }
+  }
+  // 2. Si un item est touché → effectuer l’action
+  if (hoveredItem) {
+    itemManager.trigger(hoveredItem);
+  }
 }
 function moveClavier() {
   if (keys.left || keys.right || keys.up || keys.down || keys.space) {
