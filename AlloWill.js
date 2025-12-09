@@ -82,7 +82,8 @@ const srcList = [
   'HommeMattMRKT.png',
   'LogoHommeDetour.png',//images[5]
   'skelx5right.png',
-  'skelx5left.png'
+  'skelx5left.png',
+  'clef01.png'
 ];
 //skinPlayer.width = images[6].width;
 //skinPlayer.height = images[6].height;
@@ -98,7 +99,8 @@ const env = [
     items: [
       {
         name: "clef01", type: "loot", view: false, posseded: false,
-        x: 305, y: 250, w: 20, h: 20,
+        src: images[8],
+        x: 355, y: 270, w: 40, h: 40,
         amount: 1, interactWith: "player"
       },
       {
@@ -184,10 +186,13 @@ class Item {
   }
   draw(ctx) {
     if (!this.view) return;
-    ctx.fillStyle = "orange";
-    ctx.fillRect(this.x, this.y, this.w, this.h);
-    if (this.src) {
-      ctx.drawImage(this.src, this.x, this.y, this.w, this.h);
+    if (this.src != "" && this.type !== "decor") {
+      ctx.drawImage(this.src /*images[8]*/, this.x, this.y, this.w, this.h);
+      console.log("Source de l'item", this.src);
+    } else {
+      console.log("Pas de src");
+      ctx.fillStyle = "#ed0a0a42";
+      ctx.fillRect(this.x, this.y, this.w, this.h);
     }
   }
   contains(px, py) {
@@ -543,8 +548,8 @@ function draw() {
   //ctx.globalAlpha = 0.25;//opacité pour ombre personnage
   //ctx.globalAlpha = 1;
   // LightTarget
-  ctx.fillStyle = "#ffffff00";
-  ctx.fillRect(cursor.x, cursor.y, cursor.w, cursor.h);
+  ctx.fillStyle = "rgba(255, 255, 255, 1)";
+  ctx.fillRect(cursor.x + 4, cursor.y + 2, cursor.w - 8, cursor.h - 8);
   //Dessin effet lampe de poche
   const radius = 120;
   //ctx.save();//sauvegarde état
@@ -721,11 +726,12 @@ function GestionClavier() {  // const keys = { left: false, right: false, up: fa
   });
 }
 function GestionTactile() {
-  canvas.addEventListener("touchstart", handleTouch,{passive:false});
-  canvas.addEventListener("touchmove", handleTouch,{passive:false});
-  canvas.addEventListener("touchend", () =>{ touchDir = null;
-      touchStartX=null;
-      touchStartY=null;
+  canvas.addEventListener("touchstart", handleTouch, { passive: false });
+  canvas.addEventListener("touchmove", handleTouch, { passive: false });
+  canvas.addEventListener("touchend", () => {
+    touchDir = null;
+    touchStartX = null;
+    touchStartY = null;
   });
   console.log("tactile ok");
 }
@@ -745,12 +751,12 @@ function handleTouch(e) {
   const y = touch.clientY - rect.top;
 
   handlePointer(x, y);
- 
- //si 1er contact -> fixer le centre
- if(touchStartX===null){
-     touchStartX=x;
-     touchStartY=y;
- }
+
+  //si 1er contact -> fixer le centre
+  if (touchStartX === null) {
+    touchStartX = x;
+    touchStartY = y;
+  }
 
   const dx = x - touchStartX; //cursor.x;
   const dy = y - touchStartY; //cursor.y;
@@ -806,7 +812,7 @@ function antiDefilPerm() {
 
   const now = performance.now();
   const isInactive = (now - lastInputTime) > inactiveDelay;
-  console.log("vitLmp : ", vitesseLampe, " c.speed : ", cursor.speed, "framMS : ", spriteAnimTimer);
+  //console.log("vitLmp : ", vitesseLampe, " c.speed : ", cursor.speed, "framMS : ", spriteAnimTimer);
   // Si inactif → repousser le curseur hors des edgeZones
   if (isInactive) {
     if (cursor.x < edgeZone) cursor.x = edgeZone + 1;
