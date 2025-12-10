@@ -186,7 +186,7 @@ class Item {
   }
   draw(ctx) {
     if (!this.view) return;
-    if (this.src != "" && this.type !== "decor") {
+    if (this.src /*instanceof HTMLImageElement) {*/!= "" && this.type !== "decor") {
       ctx.drawImage(this.src /*images[8]*/, this.x, this.y, this.w, this.h);
       console.log("Source de l'item", this.src);
     } else {
