@@ -132,7 +132,7 @@ class ItemManager {
       if (item === hoveredItem) { // AFFICHER LE CADRE si le curseur est dessus
         ctx.strokeStyle = "yellow";
         ctx.lineWidth = 2;
-        ctx.strokeRect(item.x, item.y, item.w, item.h);
+        ctx.strokeRect(item.x - cameraX * 2, item.y, item.w, item.h);
       }
     }
   }
@@ -190,15 +190,15 @@ class Item {
     if (!this.view) return;
     if (images[this.indexSrc] /*instanceof HTMLImageElement) {*/ != "" && this.type !== "decor") {
       console.log("Source de l'item imag8: ", images[this.indexSrc]/*, ". tab : ", img[0], ". img : ", img, ". src: ", this.srcIt*/);
-      ctx.drawImage(images[this.indexSrc]/*images[8]*/, this.x, this.y, this.w, this.h);
+      ctx.drawImage(images[this.indexSrc]/*images[8]*/, this.x - cameraX * 2, this.y, this.w, this.h);
     } else {
       console.log("Pas de src");
-      //ctx.fillStyle = "#ed0a0a42";
-      //ctx.fillRect(this.x, this.y, this.w, this.h);
+      ctx.fillStyle = "#d2ed0a23";
+      ctx.fillRect(this.x - cameraX * 2, this.y, this.w, this.h);
     }
   }
   contains(px, py) {
-    return px >= this.x && px <= this.x + this.w &&
+    return px >= this.x - cameraX * 2 && px <= this.x - cameraX * 2 + this.w &&
       py >= this.y && py <= this.y + this.h;
   }
 }
@@ -551,7 +551,7 @@ function draw() {
   //ctx.globalAlpha = 1;
   // LightTarget
   ctx.fillStyle = "rgba(255, 255, 255, 1)";
-  ctx.fillRect(cursor.x + 4, cursor.y + 2, cursor.w - 8, cursor.h - 8);
+  ctx.fillRect(cursor.x + 4, cursor.y, cursor.w - 8, cursor.h - 8);
   //Dessin effet lampe de poche
   const radius = 120;
   //ctx.save();//sauvegarde état
@@ -657,6 +657,7 @@ function showStartScreen() {
   ctx.fillText("F11 + Lumières éteintes", canvas.width / 2, canvas.height / 2 - 60);
   ctx.fillText("Appuyez sur ESPACE ou", canvas.width / 2, canvas.height / 2 + 60);
   ctx.fillText("Touchez pour COMMENCER", canvas.width / 2, canvas.height / 2 + 100);
+  ctx.fillText("F1 pour Aide lors du jeu", canvas.width / 2, canvas.height / 2 + 140);
 }
 /*function newGame() {
   continue debutPartie;
@@ -885,8 +886,8 @@ function writeLine(numLigne, text) {
   ctx.fillText(text, 2 * WIDTH * pourcBord / 100, y + hautLigne);
 }
 function affOptions() {
-  writeLine(1, "Avancez ou reculez :");
-  writeLine(2, "Flèches directionnelles");
+  writeLine(2, "B ou Tactile : Action");
+  writeLine(1, "Flèches directionnelles");
   writeLine(3, "Echap/P/F1 : Pause");
   writeLine(4, "Espace : Courir");
 }
