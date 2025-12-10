@@ -99,13 +99,13 @@ const env = [
     items: [
       {
         name: "clef01", type: "loot", view: false, posseded: false,
-        src: images[8],
+        indexSrc: 8,
         x: 355, y: 270, w: 40, h: 40,
         amount: 1, interactWith: "player"
       },
       {
         name: "it01U00", type: "use", view: false,
-        src: images[8],
+        indexSrc: 8,
         x: 750, y: 100, w: 10, h: 10,
         interactWith: null, action: "unlockSomething"
       },
@@ -185,14 +185,16 @@ class Item {
     Object.assign(this, data);
   }
   draw(ctx) {
+    //let img = new Image();//[this.srcIt];
+    //img.src = this.srcIt;
     if (!this.view) return;
-    if (this.src /*instanceof HTMLImageElement) {*/!= "" && this.type !== "decor") {
-      ctx.drawImage(this.src /*images[8]*/, this.x, this.y, this.w, this.h);
-      console.log("Source de l'item", this.src);
+    if (images[this.indexSrc] /*instanceof HTMLImageElement) {*/ != "" && this.type !== "decor") {
+      console.log("Source de l'item imag8: ", images[this.indexSrc]/*, ". tab : ", img[0], ". img : ", img, ". src: ", this.srcIt*/);
+      ctx.drawImage(images[this.indexSrc]/*images[8]*/, this.x, this.y, this.w, this.h);
     } else {
       console.log("Pas de src");
-      ctx.fillStyle = "#ed0a0a42";
-      ctx.fillRect(this.x, this.y, this.w, this.h);
+      //ctx.fillStyle = "#ed0a0a42";
+      //ctx.fillRect(this.x, this.y, this.w, this.h);
     }
   }
   contains(px, py) {

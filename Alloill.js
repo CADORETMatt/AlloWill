@@ -17,6 +17,8 @@ let requiredTasks = 3;
 const keys = { left: false, right: false, up: false, down: false, space: false };
 //////function GestionTactile() {
 let touchDir = null; // direction du doigt (angle, distance) 
+let touchStartX = null;
+let touchStartY = null;
 let maxSpeed = 1.5;    // vitesse max du déplacement
 // --- CURSOR ---
 const cursor = { x: WIDTH / 2, y: HEIGHT / 2, w: 16, h: 16, speed: 1.5 };
@@ -80,66 +82,63 @@ const srcList = [
   'HommeMattMRKT.png',
   'LogoHommeDetour.png',//images[5]
   'skelx5right.png',
-  'skelx5left.png'
+  'skelx5left.png',
+  'clef01.png'
 ];
 //skinPlayer.width = images[6].width;
 //skinPlayer.height = images[6].height;
 let loaded = 0;
 //let PlayerImg = null; // <--- global !
 ///////////////  ITEMS  /////////////////////////////
-const env = {
-  scene01: {
+let hoveredItem = null;  // item actuellement sous le curseur
+const env = [
+  {
+    name: "scene01",
     width: 1000,
-    decorSrc: images[0],
-    items: {
-      it01L00: {
-        type: "loot",
-        x: 750,
-        y: 250,
-        w: 10,
-        h: 10,
-        view: false,
-        amount: 1,
-        interactWith: "player"
+    src: images[0],
+    items: [
+      {
+        name: "clef01", type: "loot", view: false, posseded: false,
+        indexSrc: 8,
+        x: 355, y: 270, w: 40, h: 40,
+        amount: 1, interactWith: "player"
       },
-
-      it01U00: {
-        type: "use",
-        x: 750,
-        y: 100,
-        w: 10,
-        h: 10,
-        view: false,
-        interactWith: "it01L00",
-        action: "unlockSomething"
+      {
+        name: "it01U00", type: "use", view: false,
+        indexSrc: 8,
+        x: 750, y: 100, w: 10, h: 10,
+        interactWith: null, action: "unlockSomething"
       },
-
-      it01D00: {
-        type: "decor",
-        x: 240,
-        y: 100,
-        w: 10,
-        h: 10,
-        view: false,
-        collision: true
-      }
-    }
+      {
+        name: "placard01", type: "decor", view: true,
+        x: 305, y: 316, w: 65, h: 28,
+        spawn: "clef01", action: "lootItem", collision: false
+      },
+    ]
   }
-};
+];
 class ItemManager {
   constructor(sceneData) {
     this.items = {};
-    for (const [id, data] of Object.entries(sceneData.items)) {
+    for (const data of sceneData.items) {
+      const id = data.name;
       this.items[id] = new Item(id, data);
     }
   }
+
   draw(ctx) {
     for (const item of Object.values(this.items)) {
       item.draw(ctx);
+      if (item === hoveredItem) { // AFFICHER LE CADRE si le curseur est dessus
+        ctx.strokeStyle = "yellow";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(item.x, item.y, item.w, item.h);
+      }
     }
   }
   trigger(item) {
-    if (item.type === "loot") {
+    if (!item) return;
+    if (item.type === "loot") { //Loot = Récup
       console.log("Loot :", item.id);
       item.view = false;
     }
@@ -150,13 +149,28 @@ class ItemManager {
       }
       if (item.action) this.doAction(item.action);
     }
-  }
-  doAction(name) {
-    if (name === "unlockSomething") {
-      console.log("ACTION → Déverrouillage !");
+    if (item.type === "decor") {
+      console.log("Decor :", item.id);
+      if (item.spawn) {
+        this.items[item.spawn].view = true;
+        item.view = false;
+      }
+      if (item.action) this.doAction(item.action);
     }
   }
-
+  doAction(name) {
+    switch (name) {
+      case "unlockSomething":
+        console.log("ACTION → Déverrouillage !");
+        break;
+      case "lootItem":
+        console.log("Objet ", this.items.spawn, " trouvé dans ", this.items.name, " !");
+        //        item.interactWith: "clef01"
+        break;
+      default:
+        console.warn("Action inconnue :", name);
+    }
+  }
   /*  handleClick(x, y) {
     for (const item of Object.values(this.items)) {
       if (item.view && item.contains(x, y)) {
@@ -171,23 +185,73 @@ class Item {
     Object.assign(this, data);
   }
   draw(ctx) {
+    //let img = new Image();//[this.srcIt];
+    //img.src = this.srcIt;
     if (!this.view) return;
-    ctx.fillStyle = "orange";
-    ctx.fillRect(this.x, this.y, this.w, this.h);
+    if (images[this.indexSrc] /*instanceof HTMLImageElement) {*/ != "" && this.type !== "decor") {
+      console.log("Source de l'item imag8: ", images[this.indexSrc]/*, ". tab : ", img[0], ". img : ", img, ". src: ", this.srcIt*/);
+      ctx.drawImage(images[this.indexSrc]/*images[8]*/, this.x, this.y, this.w, this.h);
+    } else {
+      console.log("Pas de src");
+      //ctx.fillStyle = "#ed0a0a42";
+      //ctx.fillRect(this.x, this.y, this.w, this.h);
+    }
   }
   contains(px, py) {
     return px >= this.x && px <= this.x + this.w &&
       py >= this.y && py <= this.y + this.h;
   }
 }
-const scene = env.scene01;
-const itemManager = new ItemManager(scene); // -> Uncaught ReferenceError: Cannot access 'ItemManager' before initialization
+const scene = env[0];
+const itemManager = new ItemManager(scene);
 
-
-
+function updateHover(cursorX, cursorY) {
+  hoveredItem = null;
+  for (const item of Object.values(itemManager.items)) {
+    if (item.view && item.contains(cursorX, cursorY)) {
+      hoveredItem = item;
+      break;
+    }
+  }
+}
 document.addEventListener("keydown", e => {
-  if (e.key === "b" || e.key === "B") itemManager.doAction();
+  if (e.key === "b" || e.key === "B") {
+    if (hoveredItem) {
+      itemManager.trigger(hoveredItem);
+    }
+    itemManager.doAction();
+  }
 });
+
+/*canvas.addEventListener("touchstart", (e) => {
+const touch = e.touches[0];
+ handleTouch(touch.clientX, touch.clientY);
+});
+canvas.addEventListener("touchmove", (e) => {
+  const touch = e.touches[0];
+  const rect = canvas.getBoundingClientRect();
+  const x = touch.clientX - rect.left;
+  const y = touch.clientY - rect.top;
+  //updateHover(x, y); // réutilise ta fonction PC
+});*/
+/*function handleTouch(clientX, clientY) {
+  const rect = canvas.getBoundingClientRect();
+  const x = clientX - rect.left;
+  const y = clientY - rect.top;
+  // 1. Détecter si on est sur un item
+  hoveredItem = null;
+  for (const item of Object.values(itemManager.items)) {
+    if (item.view && item.contains(x, y)) {
+      hoveredItem = item;
+      break;
+    }
+  }
+  // 2. Si un item est touché → effectuer l’action
+  if (hoveredItem) {
+    itemManager.trigger(hoveredItem);
+  }
+}*/
+
 /*canvas.addEventListener("touchstart", e => {
   itemManager.triggerAction();
 
@@ -240,7 +304,7 @@ console.log("Validation...");
 Run(env);
 function breakRun(projet) { return new Promise(License => setTimeout(License, projet)); }
 async function Run(env) {
-  console.log(env.scene01); // OK
+  console.log(env[0]); // OK
   waitForUserStart();
   console.log("logo :");
   await breakRun(457);
@@ -405,6 +469,7 @@ function update() {
   moveTactile();  // tactile orienté
   antiDefilPerm();
   screenWall();
+  updateHover(cursor.x, cursor.y);
   // Check "tâches"
   incTaskOrWin(); //cursor{}, tasksDone, requiredTasks, endGame()   
   //Demi-tour perso
@@ -485,8 +550,8 @@ function draw() {
   //ctx.globalAlpha = 0.25;//opacité pour ombre personnage
   //ctx.globalAlpha = 1;
   // LightTarget
-  ctx.fillStyle = "#ffffff00";
-  ctx.fillRect(cursor.x, cursor.y, cursor.w, cursor.h);
+  ctx.fillStyle = "rgba(255, 255, 255, 1)";
+  ctx.fillRect(cursor.x + 4, cursor.y + 2, cursor.w - 8, cursor.h - 8);
   //Dessin effet lampe de poche
   const radius = 120;
   //ctx.save();//sauvegarde état
@@ -663,9 +728,13 @@ function GestionClavier() {  // const keys = { left: false, right: false, up: fa
   });
 }
 function GestionTactile() {
-  canvas.addEventListener("touchstart", handleTouch);
-  canvas.addEventListener("touchmove", handleTouch);
-  canvas.addEventListener("touchend", () => touchDir = null);
+  canvas.addEventListener("touchstart", handleTouch, { passive: false });
+  canvas.addEventListener("touchmove", handleTouch, { passive: false });
+  canvas.addEventListener("touchend", () => {
+    touchDir = null;
+    touchStartX = null;
+    touchStartY = null;
+  });
   console.log("tactile ok");
 }
 function ecouteTouchePause() {
@@ -685,8 +754,14 @@ function handleTouch(e) {
 
   handlePointer(x, y);
 
-  const dx = x - cursor.x;
-  const dy = y - cursor.y;
+  //si 1er contact -> fixer le centre
+  if (touchStartX === null) {
+    touchStartX = x;
+    touchStartY = y;
+  }
+
+  const dx = x - touchStartX; //cursor.x;
+  const dy = y - touchStartY; //cursor.y;
 
   const dist = Math.hypot(dx, dy);
   const angleTouch = Math.atan2(dy, dx);
@@ -697,6 +772,18 @@ function handleTouch(e) {
   touchDir = { angleTouch, intensity };
 
   lastInputTime = performance.now();
+  // 1. Détecter si on est sur un item
+  hoveredItem = null;
+  for (const item of Object.values(itemManager.items)) {
+    if (item.view && item.contains(x, y)) {
+      hoveredItem = item;
+      break;
+    }
+  }
+  // 2. Si un item est touché → effectuer l’action
+  if (hoveredItem) {
+    itemManager.trigger(hoveredItem);
+  }
 }
 function moveClavier() {
   if (keys.left || keys.right || keys.up || keys.down || keys.space) {
@@ -727,7 +814,7 @@ function antiDefilPerm() {
 
   const now = performance.now();
   const isInactive = (now - lastInputTime) > inactiveDelay;
-  console.log("vitLmp : ", vitesseLampe, " c.speed : ", cursor.speed, "framMS : ", spriteAnimTimer);
+  //console.log("vitLmp : ", vitesseLampe, " c.speed : ", cursor.speed, "framMS : ", spriteAnimTimer);
   // Si inactif → repousser le curseur hors des edgeZones
   if (isInactive) {
     if (cursor.x < edgeZone) cursor.x = edgeZone + 1;
