@@ -117,6 +117,27 @@ const env = [
     ]
   }
 ];
+const NbPlaceLoot = 3;  //Emplacements inventaire
+/*const loot = [null]; //Compo inventaire
+loot.length = NbPlaceLoot;
+console.log(loot[1], loot[2], loot[3], loot[4]);*/
+
+class Inventaire {
+  constructor(taille) {
+    this.slots = Array(taille).fill(null);
+  }
+
+  add(item) {
+    const i = this.slots.indexOf(null);
+    if (i === -1) return false;      // inventaire plein
+    this.slots[i] = item;
+    return true;
+  }
+  affInv() {
+    drawLoot();
+  }
+}
+const inv = new Inventaire(NbPlaceLoot);
 class ItemManager {
   constructor(sceneData) {
     this.items = {};
@@ -141,6 +162,12 @@ class ItemManager {
     if (item.type === "loot") { //Loot = Récup
       console.log("Loot :", item.id);
       item.view = false;
+      item.posseded = true;
+      console.log("itemAdd : ", item, "possseded : ", item.posseded);
+      inv.add(item.id);
+      ////////////// FIN ///////////////////////////////////////////
+      alert("Merci d'avoir participé !\n\nRevenez dans 24h. ;-)");//
+      //////////////////////////////////////////////////////////////
     }
     if (item.type === "use") {
       console.log("Use :", item.id);
@@ -189,10 +216,10 @@ class Item {
     //img.src = this.srcIt;
     if (!this.view) return;
     if (images[this.indexSrc] /*instanceof HTMLImageElement) {*/ != "" && this.type !== "decor") {
-      console.log("Source de l'item imag8: ", images[this.indexSrc]/*, ". tab : ", img[0], ". img : ", img, ". src: ", this.srcIt*/);
+      //console.log("Source de l'item imag8: ", images[this.indexSrc]/*, ". tab : ", img[0], ". img : ", img, ". src: ", this.srcIt*/);
       ctx.drawImage(images[this.indexSrc]/*images[8]*/, this.x - cameraX * 2, this.y, this.w, this.h);
     } else {
-      console.log("Pas de src");
+      // console.log("Pas de src");
       ctx.fillStyle = "#d2ed0a23";
       ctx.fillRect(this.x - cameraX * 2, this.y, this.w, this.h);
     }
@@ -205,6 +232,22 @@ class Item {
 const scene = env[0];
 const itemManager = new ItemManager(scene);
 
+function drawLoot() {
+  const pos = buttonPositions[6];
+  ctx.strokeStyle = couleurBtn;
+  ctx.lineWidth = 2;
+  ctx.strokeRect(pos.x, pos.y, pos.w, pos.h);
+  //DESSINER LIGNES 
+  ctx.beginPath();
+  for (idNbPlb = 1; idNbPlb < NbPlaceLoot; idNbPlb++) {     //0 no
+    ctx.moveTo(pos.x + idNbPlb * pos.w / NbPlaceLoot, pos.y); //3,1 -> 3,1->x+id*w/Nb
+    ctx.lineTo(pos.x + idNbPlb * pos.w / NbPlaceLoot, pos.y + pos.h);             //6,1 -> 3,2->
+    //console.log("Loot bien dessiné - Boucle : ", idNbPlb, " pos : ", pos);
+    //ctx.moveTo(pos.x, pos.y + (2 * pos.h) / 3);               //9 no
+    //ctx.lineTo(pos.x + pos.w, pos.y + (2 * pos.h) / 3);
+  }
+  ctx.stroke();
+}
 function updateHover(cursorX, cursorY) {
   hoveredItem = null;
   for (const item of Object.values(itemManager.items)) {
@@ -469,6 +512,7 @@ function update() {
   moveTactile();  // tactile orienté
   antiDefilPerm();
   screenWall();
+
   updateHover(cursor.x, cursor.y);
   // Check "tâches"
   incTaskOrWin(); //cursor{}, tasksDone, requiredTasks, endGame()   
@@ -551,12 +595,13 @@ function draw() {
   //ctx.globalAlpha = 1;
   // LightTarget
   ctx.fillStyle = "rgba(255, 255, 255, 1)";
-  ctx.fillRect(cursor.x + 4, cursor.y, cursor.w - 8, cursor.h - 8);
+  ctx.fillRect(cursor.x, cursor.y, cursor.w - 8, cursor.h - 8);
   //Dessin effet lampe de poche
   const radius = 120;
   //ctx.save();//sauvegarde état
   ctx.fillStyle = "rgba(4, 0, 60, 0.8)"; // obscurité
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
+  itemManager.draw(ctx); // dessin décor + items
   ctx.fillStyle = "rgba(242, 254, 8, 0.2)"; // zone éclairée
   ctx.beginPath();
   ctx.arc(cursor.x + cursor.w / 2, cursor.y + cursor.h / 2, radius, 0, Math.PI * 2);
@@ -568,7 +613,6 @@ function draw() {
     0, 0, WIDTH, HEIGHT  // position sur le canvas
   );// Dessiner uniquement la portion visible du décor*/
   ctx.globalAlpha = 1;
-  itemManager.draw(ctx); // dessin décor + items
   ctx.save();
   // Animation sprite sheet (images[6])
   // sourceX, sourceY, sourceW, sourceH, dx, dy, dw, dh
@@ -581,6 +625,7 @@ function draw() {
   //ctx.fillStyle = "rgba(4, 0, 60, 0.3)"; // obscurité
   //ctx.fillRect(0, 0, WIDTH, HEIGHT);
   ctx.restore();
+  inv.affInv();
 }
 //**JEU***********************************
 /*       ***affichage décor
