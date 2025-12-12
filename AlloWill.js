@@ -83,7 +83,8 @@ const srcList = [
   'LogoHommeDetour.png',//images[5]
   'skelx5right.png',
   'skelx5left.png',
-  'clef01.png'
+  'clef01.png',
+  'bonbonItem.png'
 ];
 //skinPlayer.width = images[6].width;
 //skinPlayer.height = images[6].height;
@@ -104,8 +105,8 @@ const env = [
         amount: 1, interactWith: "player"
       },
       {
-        name: "clef02", type: "loot", view: true, posseded: false,
-        indexSrc: 8,
+        name: "bonbon", type: "loot", view: true, posseded: false,
+        indexSrc: 9,
         x: 855, y: 270, w: 40, h: 40,
         amount: 1, interactWith: "player"
       },
@@ -283,7 +284,6 @@ document.addEventListener("keydown", e => {
     itemManager.doAction();
   }
 });
-
 /*canvas.addEventListener("touchstart", (e) => {
 const touch = e.touches[0];
  handleTouch(touch.clientX, touch.clientY);
