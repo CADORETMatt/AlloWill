@@ -136,8 +136,8 @@ class Inventaire { // On peut imaginer d'autres inventaires (coffre, PNJ, ...)
   affInv() {
     drawLoot();
     for (const s of this.slots) {
-      console.log("s : ", s);
-      //ctx.drawImage(s[0].indexSrc, s.x, s.y, s.w, s.h);
+     // console.log("s : ", s,"Item : ",Item);
+      ctx.drawImage(images[s.indexSrc], s.x, s.y+100, s.w, s.h);
     }
   }
 }
