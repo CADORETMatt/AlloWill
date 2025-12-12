@@ -104,6 +104,12 @@ const env = [
         amount: 1, interactWith: "player"
       },
       {
+        name: "clef02", type: "loot", view: true, posseded: false,
+        indexSrc: 8,
+        x: 855, y: 270, w: 40, h: 40,
+        amount: 1, interactWith: "player"
+      },
+      {
         name: "it01U00", type: "use", view: false,
         indexSrc: 8,
         x: 750, y: 100, w: 10, h: 10,
@@ -122,7 +128,7 @@ const NbPlaceLoot = 3;  //Emplacements inventaire
 loot.length = NbPlaceLoot;
 console.log(loot[1], loot[2], loot[3], loot[4]);*/
 
-class Inventaire {
+class Inventaire { // On peut imaginer d'autres inventaires (coffre, PNJ, ...)
   constructor(taille) {
     this.slots = Array(taille).fill(null);
   }
@@ -134,8 +140,16 @@ class Inventaire {
     return true;
   }
   affInv() {
-    drawLoot();
-  }
+    //console.log(this.slots.every(x => x !== null));
+    //console.log("drawLoot - this.slots : "/*, this.slots*/);
+    const pos = drawLoot();
+    for (const [i, s] of this.slots.entries()) {
+      if (!s) continue;
+      //console.log("inventaire occupé. this.slots : ", this.slots);
+      //console.log("NumSlot : ", i,/* "longueur this.sl : ", this.slots.lenght,*/ "pos : ", pos);
+      ctx.drawImage(images[s.indexSrc], pos.x + 2 + i * pos.w / NbPlaceLoot, pos.y + 2, pos.w / NbPlaceLoot - 4, pos.h - 4);
+    }  //pos.x,pos.y- pos.w/Nb,pos.h      pos.x+i*pos.w/Nb,pos.y - pos.w/Nb,pos.h 
+  }   // 
 }
 const inv = new Inventaire(NbPlaceLoot);
 class ItemManager {
@@ -164,10 +178,13 @@ class ItemManager {
       item.view = false;
       item.posseded = true;
       console.log("itemAdd : ", item, "possseded : ", item.posseded);
-      inv.add(item.id);
-      ////////////// FIN ///////////////////////////////////////////
-      alert("Merci d'avoir participé !\n\nRevenez dans 24h. ;-)");//
-      //////////////////////////////////////////////////////////////
+      inv.add(item);
+      console.log("inv = ", inv);
+      if (inv.slots[1] != null) {
+        ////////////// FIN ///////////////////////////////////////////
+        alert("Merci d'avoir participé !\n\nRevenez dans 24h. ;-)");//
+        //////////////////////////////////////////////////////////////
+      }
     }
     if (item.type === "use") {
       console.log("Use :", item.id);
@@ -247,6 +264,7 @@ function drawLoot() {
     //ctx.lineTo(pos.x + pos.w, pos.y + (2 * pos.h) / 3);
   }
   ctx.stroke();
+  return pos;
 }
 function updateHover(cursorX, cursorY) {
   hoveredItem = null;

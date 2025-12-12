@@ -104,6 +104,12 @@ const env = [
         amount: 1, interactWith: "player"
       },
       {
+        name: "clef02", type: "loot", view: true, posseded: false,
+        indexSrc: 8,
+        x: 855, y: 270, w: 40, h: 40,
+        amount: 1, interactWith: "player"
+      },
+      {
         name: "it01U00", type: "use", view: false,
         indexSrc: 8,
         x: 750, y: 100, w: 10, h: 10,
@@ -134,12 +140,16 @@ class Inventaire { // On peut imaginer d'autres inventaires (coffre, PNJ, ...)
     return true;
   }
   affInv() {
-    drawLoot();
-    for (const s of this.slots) {
-     // console.log("s : ", s,"Item : ",Item);
-      ctx.drawImage(images[s.indexSrc], s.x, s.y+100, s.w, s.h);
-    }
-  }
+    //console.log(this.slots.every(x => x !== null));
+    //console.log("drawLoot - this.slots : "/*, this.slots*/);
+    const pos = drawLoot();
+    for (const [i, s] of this.slots.entries()) {
+      if (!s) continue;
+      //console.log("inventaire occupé. this.slots : ", this.slots);
+      //console.log("NumSlot : ", i,/* "longueur this.sl : ", this.slots.lenght,*/ "pos : ", pos);
+      ctx.drawImage(images[s.indexSrc], pos.x + 2 + i * pos.w / NbPlaceLoot, pos.y + 2, pos.w / NbPlaceLoot - 4, pos.h - 4);
+    }  //pos.x,pos.y- pos.w/Nb,pos.h      pos.x+i*pos.w/Nb,pos.y - pos.w/Nb,pos.h 
+  }   // 
 }
 const inv = new Inventaire(NbPlaceLoot);
 class ItemManager {
@@ -170,9 +180,11 @@ class ItemManager {
       console.log("itemAdd : ", item, "possseded : ", item.posseded);
       inv.add(item);
       console.log("inv = ", inv);
-      ////////////// FIN ///////////////////////////////////////////
-      alert("Merci d'avoir participé !\n\nRevenez dans 24h. ;-)");//
-      //////////////////////////////////////////////////////////////
+      if (inv.slots[1] != null) {
+        ////////////// FIN ///////////////////////////////////////////
+        alert("Merci d'avoir participé !\n\nRevenez dans 24h. ;-)");//
+        //////////////////////////////////////////////////////////////
+      }
     }
     if (item.type === "use") {
       console.log("Use :", item.id);
@@ -252,6 +264,7 @@ function drawLoot() {
     //ctx.lineTo(pos.x + pos.w, pos.y + (2 * pos.h) / 3);
   }
   ctx.stroke();
+  return pos;
 }
 function updateHover(cursorX, cursorY) {
   hoveredItem = null;
