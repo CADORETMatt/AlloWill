@@ -70,6 +70,7 @@ let audioCtx = null;          // Le vrai moteur audio
 const sounds = {};            // Dictionnaire : nom → AudioBuffer
 const soundList = [
   { name: "neon", url: "Sons/NeonEntier.wav" },
+  { name: "Noel", url: "Sons/NoelOmbres.mp3" },
   { name: "tension1", url: "Sons/tension1.wav" },
   { name: "glitch1", url: "Sons/glitch1.wav" }
 ];
@@ -96,7 +97,7 @@ const env = [
   {
     name: "scene01",
     width: 1000,
-    src: images[0],
+    src: images[0], indexSrc: 0,
     items: [
       {
         name: "clef01", type: "loot", view: false, posseded: false,
@@ -121,6 +122,28 @@ const env = [
         x: 305, y: 316, w: 65, h: 28,
         spawn: "clef01", action: "lootItem", collision: false
       },
+      {
+        name: "Porte01", type: "decor", view: true,
+        x: 1915, y: 143, w: 85, h: 248,
+        goScene: "scene02" //action: "lootItem", collision: false
+      }
+    ]
+  },
+  {
+    name: "scene02",
+    width: 1000,
+    src: images[0], indexSrc: 0,
+    items: [
+      {
+        name: "Porte00", type: "decor", view: true,
+        x: 0, y: 143, w: 85, h: 248,
+        goScene: "scene01" //action: "lootItem", collision: false
+      },
+      {
+        name: "Porte01", type: "decor", view: false,
+        x: 1915, y: 143, w: 85, h: 248,
+        goScene: "scene03", besoin: "clef01" //action: "lootItem", collision: false
+      }
     ]
   }
 ];
@@ -181,11 +204,6 @@ class ItemManager {
       console.log("itemAdd : ", item, "possseded : ", item.posseded);
       inv.add(item);
       console.log("inv = ", inv);
-      if (inv.slots[1] != null) {
-        ////////////// FIN ///////////////////////////////////////////
-        alert("Merci d'avoir participé !\n\nRevenez dans 24h. ;-)");//
-        //////////////////////////////////////////////////////////////
-      }
     }
     if (item.type === "use") {
       console.log("Use :", item.id);
@@ -199,6 +217,17 @@ class ItemManager {
       if (item.spawn) {
         this.items[item.spawn].view = true;
         item.view = false;
+      }
+      if (item.goScene) {
+        //this.items[item.spawn].view = true;
+        //item.view = false;
+        scene = env[1];
+        console.log("scene.indSrc : ", scene.indexSrc);
+        if (inv.slots[1] != null) {
+          ////////////// FIN ///////////////////////////////////////////
+          alert("Merci d'avoir participé !\n\nRevenez dans 24h. ;-)");//
+          //////////////////////////////////////////////////////////////
+        }
       }
       if (item.action) this.doAction(item.action);
     }
@@ -247,7 +276,7 @@ class Item {
       py >= this.y && py <= this.y + this.h;
   }
 }
-const scene = env[0];
+let scene = env[0];
 const itemManager = new ItemManager(scene);
 
 function drawLoot() {
@@ -455,6 +484,7 @@ async function Run(env) {
     }
     // --- GAME LOOP ---
     // debutPartie:
+    //playSound("Noel", { volume: 0.4, fadeIn: 100 });
     loop();
     //// ///////////////////////////////////////////////////////
     ///           fadeOutLogo           ///////////////////////
