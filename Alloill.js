@@ -76,16 +76,16 @@ const soundList = [
 ];
 const images = [];
 const srcList = [
-  'Asset1-1.bmp',
-  'Hum1NB.png',
-  'rond1000.png',
-  'LogoMattMRKT.png',
-  'HommeMattMRKT.png',
-  'LogoHommeDetour.png',//images[5]
-  'skelx5right.png',
-  'skelx5left.png',
-  'clef01.png',
-  'bonbonItem.png'
+  'Images/Asset1-1.bmp',
+  'Images/Hum1NB.png',
+  'Images/rond1000.png',
+  'Images/LogoMattMRKT.png',
+  'Images/HommeMattMRKT.png',
+  'Images/LogoHommeDetour.png',//images[5]
+  'Images/skelx5right.png',
+  'Images/skelx5left.png',
+  'Images/clef01.png',
+  'Images/bonbonItem.png'
 ];
 //skinPlayer.width = images[6].width;
 //skinPlayer.height = images[6].height;
