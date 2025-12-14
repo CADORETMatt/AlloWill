@@ -95,7 +95,8 @@ const srcList = [
 let loaded = 0;
 //let PlayerImg = null; // <--- global !
 function finProg() {
-  if (inv.slots[1] != null) {
+  //const porteFin = itemManager.items["porte02"];
+  if (inv.slots[2] != null && itemManager.items["porte01"]?.name === "porte01") {
     ////////////// FIN ///////////////////////////////////////////
     alert("Merci d'avoir participé !\n\nRevenez dans 24h. ;-)");//
     //////////////////////////////////////////////////////////////
@@ -199,14 +200,21 @@ class Inventaire { // On peut imaginer d'autres inventaires (coffre, PNJ, ...)
 }
 const inv = new Inventaire(NbPlaceLoot);
 class ItemManager {
-  constructor(sceneData) {
+  constructor(scene, itemsClone = null) {
+
+    this.sceneName = scene.name;
     this.items = {};
-    for (const data of sceneData.items) {
-      const id = data.name;
-      this.items[id] = new Item(id, data);
+
+    const sourceItems = itemsClone ?? scene.items.map(it => structuredClone(it));
+
+    for (const data of sourceItems) {
+      this.items[data.name] = new Item(data.name, data);
     }
   }
 
+  exportState() {
+    return Object.values(this.items).map(it => structuredClone(it));
+  }
   draw(ctx) {
     for (const item of Object.values(this.items)) {
       item.draw(ctx);
@@ -279,7 +287,7 @@ class Item {
     //let img = new Image();//[this.srcIt];
     //img.src = this.srcIt;
     if (!this.view) return;
-    if (images[this.indexSrc] /*instanceof HTMLImageElement) {*/ != "" && this.type !== "decor") {
+    if (images[this.indexSrc])/*instanceof HTMLImageElement) { != "" /*&& this.type !== "decor")*/ {
       //console.log("Source de l'item imag8: ", images[this.indexSrc]/*, ". tab : ", img[0], ". img : ", img, ". src: ", this.srcIt*/);
       ctx.drawImage(images[this.indexSrc]/*images[8]*/, this.x - cameraX * 2, this.y, this.w, this.h);
     } else {
@@ -293,15 +301,45 @@ class Item {
       py >= this.y && py <= this.y + this.h;
   }
 }
-function changeScene(newScene) {
+let itemManager = new ItemManager(scene);
+
+/*function changeScene(newScene) {
   const indScene = env.findIndex(s => s.name === newScene);
   //  const inScene = env.find(s => s.name === newScene);
   scene = env[indScene];
-  cameraX = scene.startSc;
-  console.log("env[indSc] : ", scene);
-}
-const itemManager = new ItemManager(scene);
+  cameraX = scene.startSc ?? 0;
+  itemManager = new ItemManager(scene);
+  hoveredItem = null;
+  console.log("env[indSc] : ", scene, "itManag: ", itemManager);
+}*/
+const sceneItemManagers = {};
+const sceneStates = {};
 
+function changeScene(sceneName) {
+
+  // Sauvegarde AVANT de quitter
+  if (scene && itemManager) {
+    sceneStates[scene.name] = itemManager.exportState();
+  }
+
+  // Trouver la scène
+  scene = env.find(s => s.name === sceneName);
+  if (!scene) return;
+
+  // Restaurer ou créer
+  const saved = sceneStates[scene.name] ?? null;
+  itemManager = new ItemManager(scene, saved);
+
+  hoveredItem = null;
+  cameraX = scene.startSc ?? 0;
+
+  console.log(
+    "Scene chargée :",
+    scene.name,
+    saved ? "(état restauré)" : "(état neuf)"
+  );
+  console.log("ScenPrec: ", itemManager);
+}
 function drawLoot() {
   const pos = buttonPositions[6];
   ctx.strokeStyle = couleurBtn;
@@ -648,8 +686,8 @@ function fadeOutLogo(duration = 1500) {
 function draw() {
   // Calcul centrage et échelle
 
-  let ratioH = HEIGHT / scene.height;
-  let ratioX = 500 / (scene.height * 2);
+  // let ratioH = HEIGHT / scene.height;
+  //let ratioX = 500 / (scene.height * 2);
   const scaleDraw = 1;//Math.min(WIDTH / PlayerImg.width, HEIGHT / PlayerImg.height);
   const drawW = skinPlayer.width * scaleDraw;
   const drawH = skinPlayer.height * scaleDraw;

@@ -82,34 +82,46 @@ const srcList = [
   'Images/LogoMattMRKT.png',
   'Images/HommeMattMRKT.png',
   'Images/LogoHommeDetour.png',//images[5]
-  'Images/skelx5right.png',
-  'Images/skelx5left.png',
+  "Images/skelx5right.png",
+  "Images/skelx5left.png",
   'Images/clef01.png',
-  'Images/bonbonItem.png'
+  'Images/bonbonItem.png',
+  'Images/Asset1-2.bmp',  //images[10]
+  'Images/cookie.png',
+  'Images/porte.png'
 ];
 //skinPlayer.width = images[6].width;
 //skinPlayer.height = images[6].height;
 let loaded = 0;
 //let PlayerImg = null; // <--- global !
+function finProg() {
+  //const porteFin = itemManager.items["porte02"];
+  if (inv.slots[2] != null && itemManager.items["porte01"]?.name === "porte01") {
+    ////////////// FIN ///////////////////////////////////////////
+    alert("Merci d'avoir participé !\n\nRevenez dans 24h. ;-)");//
+    //////////////////////////////////////////////////////////////
+  }
+}
 ///////////////  ITEMS  /////////////////////////////
 let hoveredItem = null;  // item actuellement sous le curseur
 const env = [
   {
     name: "scene01",
-    width: 1000,
+    width: 1000, height: 250,
     src: images[0], indexSrc: 0,
+    startSc: 0,
     items: [
       {
         name: "clef01", type: "loot", view: false, posseded: false,
         indexSrc: 8,
-        x: 355, y: 270, w: 40, h: 40,
-        amount: 1, interactWith: "player"
+        x: 355, y: 270, w: 40, h: 40/*,
+        amount: 1, interactWith: "player"*/
       },
       {
         name: "bonbon", type: "loot", view: true, posseded: false,
         indexSrc: 9,
-        x: 855, y: 270, w: 40, h: 40,
-        amount: 1, interactWith: "player"
+        x: 855, y: 270, w: 40, h: 40/*,
+        amount: 1, interactWith: "player"*/
       },
       {
         name: "it01U00", type: "use", view: false,
@@ -123,30 +135,41 @@ const env = [
         spawn: "clef01", action: "lootItem", collision: false
       },
       {
-        name: "Porte01", type: "decor", view: true,
+        name: "porte00", type: "decor", view: false,
+        x: 0, y: 139, w: 80, h: 252,
+        goScene: "scene00", verso: "porte0" //action: "lootItem", collision: false
+      },
+      {
+        name: "porte01", type: "decor", view: true,
         x: 1915, y: 143, w: 85, h: 248,
-        goScene: "scene02" //action: "lootItem", collision: false
+        goScene: "scene02", verso: "porte02", besoin: "clef01" //,action: "lootItem", collision: false
       }
     ]
   },
   {
     name: "scene02",
-    width: 1000,
-    src: images[0], indexSrc: 0,
+    width: 508, height: 175,
+    src: images[10], indexSrc: 10,
+    startSc: 254 - (175 / 2),
     items: [
       {
-        name: "Porte00", type: "decor", view: true,
-        x: 0, y: 143, w: 85, h: 248,
-        goScene: "scene01" //action: "lootItem", collision: false
+        name: "porte02", type: "decor", view: true,
+        indexSrc: 12,
+        x: 254 - 30, y: 400, w: 60, h: 60,
+        goScene: "scene01", verso: "porte01" //action: "lootItem", collision: false
       },
       {
-        name: "Porte01", type: "decor", view: false,
-        x: 1915, y: 143, w: 85, h: 248,
-        goScene: "scene03", besoin: "clef01" //action: "lootItem", collision: false
+        name: "cookie00", type: "loot", view: true, posseded: false,
+        indexSrc: 11,
+        x: 305, y: 270, w: 40, h: 40/*,
+        amount: 1, interactWith: "player"*/
       }
     ]
   }
 ];
+let scene = env[0];
+//let ratioDecor = scene.width / scene.height;
+let viewAssetWidth = scene.height;
 const NbPlaceLoot = 3;  //Emplacements inventaire
 /*const loot = [null]; //Compo inventaire
 loot.length = NbPlaceLoot;
@@ -177,14 +200,21 @@ class Inventaire { // On peut imaginer d'autres inventaires (coffre, PNJ, ...)
 }
 const inv = new Inventaire(NbPlaceLoot);
 class ItemManager {
-  constructor(sceneData) {
+  constructor(scene, itemsClone = null) {
+
+    this.sceneName = scene.name;
     this.items = {};
-    for (const data of sceneData.items) {
-      const id = data.name;
-      this.items[id] = new Item(id, data);
+
+    const sourceItems = itemsClone ?? scene.items.map(it => structuredClone(it));
+
+    for (const data of sourceItems) {
+      this.items[data.name] = new Item(data.name, data);
     }
   }
 
+  exportState() {
+    return Object.values(this.items).map(it => structuredClone(it));
+  }
   draw(ctx) {
     for (const item of Object.values(this.items)) {
       item.draw(ctx);
@@ -221,13 +251,8 @@ class ItemManager {
       if (item.goScene) {
         //this.items[item.spawn].view = true;
         //item.view = false;
-        scene = env[1];
-        console.log("scene.indSrc : ", scene.indexSrc);
-        if (inv.slots[1] != null) {
-          ////////////// FIN ///////////////////////////////////////////
-          alert("Merci d'avoir participé !\n\nRevenez dans 24h. ;-)");//
-          //////////////////////////////////////////////////////////////
-        }
+        changeScene(item.goScene);
+        finProg();
       }
       if (item.action) this.doAction(item.action);
     }
@@ -262,7 +287,7 @@ class Item {
     //let img = new Image();//[this.srcIt];
     //img.src = this.srcIt;
     if (!this.view) return;
-    if (images[this.indexSrc] /*instanceof HTMLImageElement) {*/ != "" && this.type !== "decor") {
+    if (images[this.indexSrc])/*instanceof HTMLImageElement) { != "" /*&& this.type !== "decor")*/ {
       //console.log("Source de l'item imag8: ", images[this.indexSrc]/*, ". tab : ", img[0], ". img : ", img, ". src: ", this.srcIt*/);
       ctx.drawImage(images[this.indexSrc]/*images[8]*/, this.x - cameraX * 2, this.y, this.w, this.h);
     } else {
@@ -276,9 +301,45 @@ class Item {
       py >= this.y && py <= this.y + this.h;
   }
 }
-let scene = env[0];
-const itemManager = new ItemManager(scene);
+let itemManager = new ItemManager(scene);
 
+/*function changeScene(newScene) {
+  const indScene = env.findIndex(s => s.name === newScene);
+  //  const inScene = env.find(s => s.name === newScene);
+  scene = env[indScene];
+  cameraX = scene.startSc ?? 0;
+  itemManager = new ItemManager(scene);
+  hoveredItem = null;
+  console.log("env[indSc] : ", scene, "itManag: ", itemManager);
+}*/
+const sceneItemManagers = {};
+const sceneStates = {};
+
+function changeScene(sceneName) {
+
+  // Sauvegarde AVANT de quitter
+  if (scene && itemManager) {
+    sceneStates[scene.name] = itemManager.exportState();
+  }
+
+  // Trouver la scène
+  scene = env.find(s => s.name === sceneName);
+  if (!scene) return;
+
+  // Restaurer ou créer
+  const saved = sceneStates[scene.name] ?? null;
+  itemManager = new ItemManager(scene, saved);
+
+  hoveredItem = null;
+  cameraX = scene.startSc ?? 0;
+
+  console.log(
+    "Scene chargée :",
+    scene.name,
+    saved ? "(état restauré)" : "(état neuf)"
+  );
+  console.log("ScenPrec: ", itemManager);
+}
 function drawLoot() {
   const pos = buttonPositions[6];
   ctx.strokeStyle = couleurBtn;
@@ -394,7 +455,7 @@ console.log("Validation...");
 Run(env);
 function breakRun(projet) { return new Promise(License => setTimeout(License, projet)); }
 async function Run(env) {
-  console.log(env[0]); // OK
+  console.log(env[0], scene); // OK
   waitForUserStart();
   console.log("logo :");
   await breakRun(457);
@@ -624,6 +685,9 @@ function fadeOutLogo(duration = 1500) {
 }
 function draw() {
   // Calcul centrage et échelle
+
+  // let ratioH = HEIGHT / scene.height;
+  //let ratioX = 500 / (scene.height * 2);
   const scaleDraw = 1;//Math.min(WIDTH / PlayerImg.width, HEIGHT / PlayerImg.height);
   const drawW = skinPlayer.width * scaleDraw;
   const drawH = skinPlayer.height * scaleDraw;
@@ -634,9 +698,11 @@ function draw() {
   //  ctx.fillRect(0, 0, WIDTH, HEIGHT);
   // 1️⃣ Affiche l’image
   ctx.drawImage(
-    images[0], cameraX, 0,          // zone du décor à afficher
-    viewWidth, HEIGHT,   // portion du décor
-    0, 0, WIDTH * 2, HEIGHT * 2  // position sur le canvas
+    images[scene.indexSrc],
+    cameraX, 0,          // zone du décor à afficher
+    viewAssetWidth, scene.height,   // portion du décor
+    0, 0, WIDTH, HEIGHT//(15625000 * scene.width) / (scene.height * scene.height * scene.height) // position sur le canvas
+    //               37/   1458          15 625 000 000/7 812 500 000             421 875 000 / 5 359 375     
   );// Dessiner uniquement la portion visible du décor*/
   ctx.globalCompositeOperation = "source-over"; // par défaut 
   //ctx.globalAlpha = 0.25;//opacité pour ombre personnage
@@ -930,10 +996,10 @@ function antiDefilPerm() {
 
   // 3. SCROLL DROITE
   if (cursor.x > viewWidth - edgeZone &&
-    cameraX < decorWidth - viewWidth / 2) {
+    cameraX < scene.width - viewWidth / 2) {
     cameraX += cursor.speed;
-    if (cameraX > decorWidth - viewWidth / 2)
-      cameraX = decorWidth - viewWidth / 2;
+    if (cameraX > scene.width - viewWidth / 2)
+      cameraX = scene.width - viewWidth / 2;
   }
 }
 function Timer() {
@@ -1026,7 +1092,7 @@ function updateSpriteAnimation(deltaMs) {
     }
   } else {
     // caméra immobile → frame de repos (0)
-    spriteFrame = 0;
+    //spriteFrame = 0;
     spriteAnimTimer = 0;
   }
   exCamera = cameraX;
