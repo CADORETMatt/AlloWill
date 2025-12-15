@@ -86,7 +86,7 @@ const srcList = [
   "Images/skelx5left.png",
   'Images/clef01.png',
   'Images/bonbonItem.png',
-  'Images/Asset1-2.bmp',  //images[10]
+  'Images/Asset1-2-703x175.bmp',  //images[10]
   'Images/cookie.png',
   'Images/porte.png'
 ];
