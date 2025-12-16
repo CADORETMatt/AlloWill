@@ -13,9 +13,9 @@ let gameStarted = false;
 let timeLeft = 60;                          //
 let gameOver = false;                       //
 let tasksDone = 0;                          //
-let requiredTasks = 3;
+let requiredTasks = 1;
 // Gestion du clavier
-const keys = { left: false, right: false, up: false, down: false, space: false };
+const keys = { left: false, right: false, up: false, down: false, space: false, b: false };
 //////function GestionTactile() {
 let touchDir = null; // direction du doigt (angle, distance) 
 let touchStartX = null;
@@ -23,8 +23,10 @@ let touchStartY = null;
 let maxSpeed = 1.5;    // vitesse max du déplacement
 // --- CURSOR ---
 const cursor = { x: WIDTH / 2, y: HEIGHT / 2, w: 16, h: 16, speed: 1.5 };
-let vitesseLampe = 6; // multiplicateur de vitesse lampe de poche
 let vitesseCourse = 6; // vitesse en courant
+let vitesseLampe = 6; // multiplicateur de vitesse lampe de poche
+let consoBatterie = 0.1;
+let obscurite = 0.7;
 //////////// Variables pour le défilement/////////////
 let cameraX = 0;        // décalage horizontal de la "vue"
 let exCamera = cameraX;                     //
@@ -82,19 +84,11 @@ const srcList = [
   "Images/skelx5left.png",
   'Images/clef01.png',
   'Images/bonbonItem.png',
-  'Images/Asset1-2-703x175.bmp',  //images[10]
+  'Images/Asset1-2-703x175.png',  //images[10]
   'Images/cookie.png',
   'Images/porte.png'
 ];
 let loaded = 0;
-function finProg() {
-  //const porteFin = itemManager.items["porte02"];
-  if (inv.slots[2] != null && itemManager.items["porte01"]?.name === "porte01") {
-    ////////////// FIN ///////////////////////////////////////////
-    alert("Merci d'avoir participé !\n\nRevenez dans 24h. ;-)");//
-    //////////////////////////////////////////////////////////////
-  }
-}
 ///////////////  ITEMS  /////////////////////////////
 let hoveredItem = null;  // item actuellement sous le curseur
 const env = [
@@ -143,32 +137,50 @@ const env = [
     name: "scene02",
     width: 703, height: 175,
     src: images[10], indexSrc: 10,
-    startSc: (703/2) - (175 / 2),
+    startSc: (703 / 2) - (175 / 2),
     items: [
       {
         name: "porte02", type: "decor", view: true,
         indexSrc: 12,
-        x: 703/2 - 30, y: 400, w: 60, h: 60,
+        x: ((703 / 2) - (60 / 2)) + 240, y: 430, w: 460, h: 360,
         goScene: "scene01", verso: "porte01" //action: "lootItem", collision: false
       },
       {
         name: "cookie00", type: "loot", view: true, posseded: false,
         indexSrc: 11,
-        x: 305, y: 270, w: 40, h: 40/*,
+        x: 665, y: 270, w: 40, h: 40/*,
         amount: 1, interactWith: "player"*/
       },
       {
         name: "porte03", type: "decor", view: true,
-        x: 1100, y: 130, w: 100, h: 300//,     goScene: "scene04", verso: "porte06" //action: "lootItem", collision: false
+        x: 703 + 646, y: 110, w: 70, h: 310//,     goScene: "scene04", verso: "porte06" //action: "lootItem", collision: false
       }
     ]
   }
 ];
 let scene = env[0];
 //let ratioDecor = scene.width / scene.height;
-let viewAssetWidth = scene.height*(viewWidth/HEIGHT);
+let viewAssetWidth = scene.height * (viewWidth / HEIGHT);
 const NbPlaceLoot = 3;  //Emplacements inventaire
-
+function incTaskOrWin() {
+  // let porte3ok = false;
+  //if (hoveredItem && hoveredItem.id === "porte03") porte3ok = true;
+  //console.log("taskdone: ", tasksDone, " hoveredItem : ", hoveredItem, " key.b: ", keys.b);
+  if (inv.slots[2] != null && hoveredItem && hoveredItem.id === "porte03" && keys.b === true) { // ||  voir handlePointer ?
+    //if (tasksDone < requiredTasks) {
+    tasksDone++;
+    /*  if (inv.slots[2] != null && itemManager.items["porte01"]?.name === "porte01") {
+        ////////////// FIN ///////////////////////////////////////////
+        alert("Merci d'avoir participé !\n\nRevenez dans 24h. ;-)");//
+        //////////////////////////////////////////////////////////////
+      } */
+  }
+  //cursor.x = 70; cursor.y = 100; // Retour position
+  if (tasksDone >= requiredTasks) {
+    endGame(true);
+  }
+  //}
+}
 class Inventaire { // On peut imaginer d'autres inventaires (coffre, PNJ, ...)
   constructor(taille) {
     this.slots = Array(taille).fill(null);
@@ -246,7 +258,7 @@ class ItemManager {
         //this.items[item.spawn].view = true;
         //item.view = false;
         changeScene(item.goScene);
-        finProg();
+        incTaskOrWin();
       }
       if (item.action) this.doAction(item.action);
     }
@@ -291,16 +303,7 @@ class Item {
 let itemManager = new ItemManager(scene);
 const sceneItemManagers = {};
 const sceneStates = {};
-let decorHeight=HEIGHT*scene.width/scene.height;
-
-document.addEventListener("keydown", e => {
-  if (e.key === "b" || e.key === "B") {
-    if (hoveredItem) {
-      itemManager.trigger(hoveredItem);
-    }
-    itemManager.doAction();
-  }
-});
+let decorHeight = HEIGHT * scene.width / scene.height;
 console.log("Variables déclarées !")
 showStartScreen();
 chargMedia();
@@ -344,6 +347,7 @@ function update() {
   screenWall();
 
   updateHover(cursor.x, cursor.y);
+  actionClavier(keys.b);
   // Check "tâches"
   incTaskOrWin(); //cursor{}, tasksDone, requiredTasks, endGame()   
   //Demi-tour perso
@@ -387,15 +391,16 @@ function draw() {
   //Dessin effet lampe de poche
   const radius = 120;
   //ctx.save();//sauvegarde état
-  ctx.fillStyle = "rgba(4, 0, 60, 0.9)"; // obscurité
+  //ctx.fillStyle = "rgba(4, 0, 60, 0.7)"; 
+  ctx.fillStyle = `rgba(4,0,60,${obscurite})`; // obscurité
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
   itemManager.draw(ctx); // dessin décor + items
-  ctx.fillStyle = "rgba(242, 254, 8, 0.2)"; // zone éclairée
+  ctx.fillStyle = `rgba(242,254,8,${consoBatterie})`; // zone éclairée`// 'rgba(242, 254, 8, ${etatBatterie})';
   ctx.beginPath();
   ctx.arc(cursor.x + cursor.w / 2, cursor.y + cursor.h / 2, radius, 0, Math.PI * 2);
   ctx.fill();
   ctx.globalAlpha = 0.7;
- ctx.drawImage(
+  ctx.drawImage(
     images[2], 500 - (cursor.x + cursor.w / 2), 500 - (cursor.y + cursor.h / 2),          // zone du décor à afficher
     WIDTH, HEIGHT,   // portion du décor
     0, 0, viewWidth, HEIGHT  // position sur le canvas
@@ -589,6 +594,7 @@ async function Run(env) {
     // --- INPUT ---
     GestionClavier();
     GestionTactile();
+
     ecouteTouchePause();
     createButton("F1-P:Pause", 7, () => {
       paused = !paused;   // ou paused = !paused pour toggle
@@ -606,7 +612,7 @@ async function Run(env) {
     }
     // --- GAME LOOP ---
     // debutPartie:
-    //playSound("Noel", { volume: 0.4, fadeIn: 100 });
+    playSound("Noel", { volume: 0.6, fadeIn: 100 });
     loop();
     //// ///////////////////////////////////////////////////////
     ///           fadeOutLogo           ///////////////////////
@@ -699,6 +705,24 @@ function playSound(name, options = {}) {
   }
   return { src, gain };
 }
+/*document.addEventListener("keydown", e => {
+  if (e.key === "b" || e.key === "B") {
+    if (hoveredItem) {
+      itemManager.trigger(hoveredItem);
+    }
+    itemManager.doAction();
+  }
+});*/
+function actionClavier(key = false) {
+  if (key) {
+    if (hoveredItem) {
+      itemManager.trigger(hoveredItem);
+    }
+    itemManager.doAction();
+    console.log("ActionClavier OK. key: ", key);
+    return key;
+  }
+}
 function GestionClavier() {  // const keys = { left: false, right: false, up: false, down: false, param: false };
   window.addEventListener("keydown", e => {
     if (e.key === "ArrowLeft") keys.left = true;
@@ -706,6 +730,7 @@ function GestionClavier() {  // const keys = { left: false, right: false, up: fa
     if (e.key === "ArrowUp") keys.up = true;
     if (e.key === "ArrowDown") keys.down = true;
     if (e.key === " " || e.key === "Space") keys.space = true;
+    if (e.key === "b" || e.key === "B") keys.b = true;
   });
   window.addEventListener("keyup", e => {
     if (e.key === "ArrowLeft") keys.left = false;
@@ -713,6 +738,7 @@ function GestionClavier() {  // const keys = { left: false, right: false, up: fa
     if (e.key === "ArrowUp") keys.up = false;
     if (e.key === "ArrowDown") keys.down = false;
     if (e.key === " " || e.key === "Space") keys.space = false;
+    if (e.key === "b" || e.key === "B") keys.b = false;
   });
 }
 function GestionTactile() {
@@ -740,7 +766,7 @@ function handleTouch(e) {
   const x = touch.clientX - rect.left;
   const y = touch.clientY - rect.top;
 
-  handlePointer(x, y);
+  handlePointer(x, y); //Pointage Buttons
 
   //si 1er contact -> fixer le centre
   if (touchStartX === null) {
@@ -771,6 +797,7 @@ function handleTouch(e) {
   // 2. Si un item est touché → effectuer l’action
   if (hoveredItem) {
     itemManager.trigger(hoveredItem);
+    //A régler : il doit avoir également Touchend sur cette hoveredItem !!
   }
 }
 function moveClavier() {
@@ -824,9 +851,9 @@ function antiDefilPerm() {
 
   // 3. SCROLL DROITE
   if (cursor.x > viewWidth - edgeZone &&
-    cameraX < scene.width - viewWidth/2) {
+    cameraX < scene.width - viewWidth / 2) {
     cameraX += cursor.speed;
-    if (cameraX > scene.width - viewWidth/2)
+    if (cameraX > scene.width - viewWidth / 2)
       cameraX = scene.width - viewWidth / 2;
   }
 }
@@ -841,13 +868,6 @@ function defileTimerOrDie() {
   if (gameOver) return;
   timeLeft -= 1 / 60;
   if (timeLeft <= 0) endGame(false);
-}
-function incTaskOrWin() {
-  if (cursor.x < 20 && cursor.y < 20 && tasksDone < requiredTasks) {
-    tasksDone++;
-    cursor.x = 70; cursor.y = 100; // Retour position
-    if (tasksDone === requiredTasks) endGame(true);
-  }
 }
 function drawPauseOverlay() {
   ctx.fillStyle = "#6d6d6d7b";
@@ -936,9 +956,9 @@ function changeScene(sceneName) {
   // Restaurer ou créer
   const saved = sceneStates[scene.name] ?? null;
   itemManager = new ItemManager(scene, saved);
-  viewAssetWidth = scene.height*(viewWidth/HEIGHT);
-  decorHeight=HEIGHT*scene.width/scene.height;
-  console.log("viewAssetWidth: ",viewAssetWidth,"decorHeight: ",decorHeight);
+  viewAssetWidth = scene.height * (viewWidth / HEIGHT);
+  decorHeight = HEIGHT * scene.width / scene.height;
+  console.log("viewAssetWidth: ", viewAssetWidth, "decorHeight: ", decorHeight);
   hoveredItem = null;
   cameraX = scene.startSc ?? 0;
   console.log(
@@ -957,7 +977,7 @@ function drawLoot() {
   ctx.beginPath();
   for (idNbPlb = 1; idNbPlb < NbPlaceLoot; idNbPlb++) {     //0 no
     ctx.moveTo(pos.x + idNbPlb * pos.w / NbPlaceLoot, pos.y); //3,1 -> 3,1->x+id*w/Nb
-    ctx.lineTo(pos.x + idNbPlb * pos.w / NbPlaceLoot, pos.y + pos.h);             
+    ctx.lineTo(pos.x + idNbPlb * pos.w / NbPlaceLoot, pos.y + pos.h);
   }
   ctx.stroke();
   return pos;
@@ -976,10 +996,12 @@ function endGame(success) {
   gameOver = true;
   setTimeout(() => {
     alert(success ? "Tu as survécu!" : "Le monstre t’a attrapé!");
+    alert("Merci d'avoir participé !\n\nRevenez dans 24h. ;-)");//
+
     changeGame();
     timeLeft = 60; gameOver = false; tasksDone = 0; cameraX = 0;
-  /*  scene=env[0];
-    changeScene(scene); saved=null;*/
+    /*  scene=env[0];
+      changeScene(scene); saved=null;*/
     //    cursor = { x: WIDTH / 2, y: HEIGHT / 2, w: 16, h: 16, speed: 1.5 };
     cursor.x = WIDTH / 2; cursor.y = HEIGHT / 2; cursor.speed = 1.5;
     if (rafId !== null) {

@@ -1,3 +1,4 @@
+console.log("Début");
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 let WIDTH = Math.min(window.innerWidth - 10, 500);
@@ -12,9 +13,9 @@ let gameStarted = false;
 let timeLeft = 60;                          //
 let gameOver = false;                       //
 let tasksDone = 0;                          //
-let requiredTasks = 3;
+let requiredTasks = 1;
 // Gestion du clavier
-const keys = { left: false, right: false, up: false, down: false, space: false };
+const keys = { left: false, right: false, up: false, down: false, space: false, b: false };
 //////function GestionTactile() {
 let touchDir = null; // direction du doigt (angle, distance) 
 let touchStartX = null;
@@ -22,23 +23,20 @@ let touchStartY = null;
 let maxSpeed = 1.5;    // vitesse max du déplacement
 // --- CURSOR ---
 const cursor = { x: WIDTH / 2, y: HEIGHT / 2, w: 16, h: 16, speed: 1.5 };
-let vitesseLampe = 6; // multiplicateur de vitesse lampe de poche
 let vitesseCourse = 6; // vitesse en courant
+let vitesseLampe = 6; // multiplicateur de vitesse lampe de poche
+let consoBatterie = 0.1;
+let obscurite = 0.7;
 //////////// Variables pour le défilement/////////////
 let cameraX = 0;        // décalage horizontal de la "vue"
 let exCamera = cameraX;                     //
-const decorWidth = 1000; // largeur totale du décor
 const edgeZone = 30;// distance au bord où le scrolling commence
 let lastInputTime = 0;
 let inactiveDelay = 200; // ms avant de considérer le joueur inactif
 let clavierUse = false;
 ///////////    Recharge Partie   /////////////
 let rafId = null;
-//let isLoopRunning = false;
-/*let timeLeft = 60; let gameOver = false; let tasksDone = 0; let cameraX = 0;
-    const cursor = { x: WIDTH / 2, y: HEIGHT / 2, w: 16, h: 16, speed: 1.5 };
 //////////////////////////////////////////////*/
-//let frameNum = 0;
 let lastTimestamp = performance.now();
 let spriteFrame = 0;
 const spriteFrameCount = 5;       // ajuster si nécessaire (nombre d'images dans la spritesheet)
@@ -86,22 +84,11 @@ const srcList = [
   "Images/skelx5left.png",
   'Images/clef01.png',
   'Images/bonbonItem.png',
-  'Images/Asset1-2.bmp',  //images[10]
+  'Images/Asset1-2-703x175.png',  //images[10]
   'Images/cookie.png',
   'Images/porte.png'
 ];
-//skinPlayer.width = images[6].width;
-//skinPlayer.height = images[6].height;
 let loaded = 0;
-//let PlayerImg = null; // <--- global !
-function finProg() {
-  //const porteFin = itemManager.items["porte02"];
-  if (inv.slots[2] != null && itemManager.items["porte01"]?.name === "porte01") {
-    ////////////// FIN ///////////////////////////////////////////
-    alert("Merci d'avoir participé !\n\nRevenez dans 24h. ;-)");//
-    //////////////////////////////////////////////////////////////
-  }
-}
 ///////////////  ITEMS  /////////////////////////////
 let hoveredItem = null;  // item actuellement sous le curseur
 const env = [
@@ -148,33 +135,52 @@ const env = [
   },
   {
     name: "scene02",
-    width: 508, height: 175,
+    width: 703, height: 175,
     src: images[10], indexSrc: 10,
-    startSc: 254 - (175 / 2),
+    startSc: (703 / 2) - (175 / 2),
     items: [
       {
         name: "porte02", type: "decor", view: true,
         indexSrc: 12,
-        x: 254 - 30, y: 400, w: 60, h: 60,
+        x: ((703 / 2) - (60 / 2)) + 240, y: 430, w: 460, h: 360,
         goScene: "scene01", verso: "porte01" //action: "lootItem", collision: false
       },
       {
         name: "cookie00", type: "loot", view: true, posseded: false,
         indexSrc: 11,
-        x: 305, y: 270, w: 40, h: 40/*,
+        x: 665, y: 270, w: 40, h: 40/*,
         amount: 1, interactWith: "player"*/
+      },
+      {
+        name: "porte03", type: "decor", view: true,
+        x: 703 + 646, y: 110, w: 70, h: 310//,     goScene: "scene04", verso: "porte06" //action: "lootItem", collision: false
       }
     ]
   }
 ];
 let scene = env[0];
 //let ratioDecor = scene.width / scene.height;
-let viewAssetWidth = scene.height;
+let viewAssetWidth = scene.height * (viewWidth / HEIGHT);
 const NbPlaceLoot = 3;  //Emplacements inventaire
-/*const loot = [null]; //Compo inventaire
-loot.length = NbPlaceLoot;
-console.log(loot[1], loot[2], loot[3], loot[4]);*/
-
+function incTaskOrWin() {
+  // let porte3ok = false;
+  //if (hoveredItem && hoveredItem.id === "porte03") porte3ok = true;
+  //console.log("taskdone: ", tasksDone, " hoveredItem : ", hoveredItem, " key.b: ", keys.b);
+  if (inv.slots[2] != null && hoveredItem && hoveredItem.id === "porte03" && keys.b === true) { // ||  voir handlePointer ?
+    //if (tasksDone < requiredTasks) {
+    tasksDone++;
+    /*  if (inv.slots[2] != null && itemManager.items["porte01"]?.name === "porte01") {
+        ////////////// FIN ///////////////////////////////////////////
+        alert("Merci d'avoir participé !\n\nRevenez dans 24h. ;-)");//
+        //////////////////////////////////////////////////////////////
+      } */
+  }
+  //cursor.x = 70; cursor.y = 100; // Retour position
+  if (tasksDone >= requiredTasks) {
+    endGame(true);
+  }
+  //}
+}
 class Inventaire { // On peut imaginer d'autres inventaires (coffre, PNJ, ...)
   constructor(taille) {
     this.slots = Array(taille).fill(null);
@@ -252,7 +258,7 @@ class ItemManager {
         //this.items[item.spawn].view = true;
         //item.view = false;
         changeScene(item.goScene);
-        finProg();
+        incTaskOrWin();
       }
       if (item.action) this.doAction(item.action);
     }
@@ -270,13 +276,6 @@ class ItemManager {
         console.warn("Action inconnue :", name);
     }
   }
-  /*  handleClick(x, y) {
-    for (const item of Object.values(this.items)) {
-      if (item.view && item.contains(x, y)) {
-        this.trigger(item);
-      }
-    }
-  }*/
 }
 class Item {
   constructor(id, data) {
@@ -302,150 +301,9 @@ class Item {
   }
 }
 let itemManager = new ItemManager(scene);
-
-/*function changeScene(newScene) {
-  const indScene = env.findIndex(s => s.name === newScene);
-  //  const inScene = env.find(s => s.name === newScene);
-  scene = env[indScene];
-  cameraX = scene.startSc ?? 0;
-  itemManager = new ItemManager(scene);
-  hoveredItem = null;
-  console.log("env[indSc] : ", scene, "itManag: ", itemManager);
-}*/
 const sceneItemManagers = {};
 const sceneStates = {};
-
-function changeScene(sceneName) {
-
-  // Sauvegarde AVANT de quitter
-  if (scene && itemManager) {
-    sceneStates[scene.name] = itemManager.exportState();
-  }
-
-  // Trouver la scène
-  scene = env.find(s => s.name === sceneName);
-  if (!scene) return;
-
-  // Restaurer ou créer
-  const saved = sceneStates[scene.name] ?? null;
-  itemManager = new ItemManager(scene, saved);
-
-  hoveredItem = null;
-  cameraX = scene.startSc ?? 0;
-
-  console.log(
-    "Scene chargée :",
-    scene.name,
-    saved ? "(état restauré)" : "(état neuf)"
-  );
-  console.log("ScenPrec: ", itemManager);
-}
-function drawLoot() {
-  const pos = buttonPositions[6];
-  ctx.strokeStyle = couleurBtn;
-  ctx.lineWidth = 2;
-  ctx.strokeRect(pos.x, pos.y, pos.w, pos.h);
-  //DESSINER LIGNES 
-  ctx.beginPath();
-  for (idNbPlb = 1; idNbPlb < NbPlaceLoot; idNbPlb++) {     //0 no
-    ctx.moveTo(pos.x + idNbPlb * pos.w / NbPlaceLoot, pos.y); //3,1 -> 3,1->x+id*w/Nb
-    ctx.lineTo(pos.x + idNbPlb * pos.w / NbPlaceLoot, pos.y + pos.h);             //6,1 -> 3,2->
-    //console.log("Loot bien dessiné - Boucle : ", idNbPlb, " pos : ", pos);
-    //ctx.moveTo(pos.x, pos.y + (2 * pos.h) / 3);               //9 no
-    //ctx.lineTo(pos.x + pos.w, pos.y + (2 * pos.h) / 3);
-  }
-  ctx.stroke();
-  return pos;
-}
-function updateHover(cursorX, cursorY) {
-  hoveredItem = null;
-  for (const item of Object.values(itemManager.items)) {
-    if (item.view && item.contains(cursorX, cursorY)) {
-      hoveredItem = item;
-      break;
-    }
-  }
-}
-document.addEventListener("keydown", e => {
-  if (e.key === "b" || e.key === "B") {
-    if (hoveredItem) {
-      itemManager.trigger(hoveredItem);
-    }
-    itemManager.doAction();
-  }
-});
-/*canvas.addEventListener("touchstart", (e) => {
-const touch = e.touches[0];
- handleTouch(touch.clientX, touch.clientY);
-});
-canvas.addEventListener("touchmove", (e) => {
-  const touch = e.touches[0];
-  const rect = canvas.getBoundingClientRect();
-  const x = touch.clientX - rect.left;
-  const y = touch.clientY - rect.top;
-  //updateHover(x, y); // réutilise ta fonction PC
-});*/
-/*function handleTouch(clientX, clientY) {
-  const rect = canvas.getBoundingClientRect();
-  const x = clientX - rect.left;
-  const y = clientY - rect.top;
-  // 1. Détecter si on est sur un item
-  hoveredItem = null;
-  for (const item of Object.values(itemManager.items)) {
-    if (item.view && item.contains(x, y)) {
-      hoveredItem = item;
-      break;
-    }
-  }
-  // 2. Si un item est touché → effectuer l’action
-  if (hoveredItem) {
-    itemManager.trigger(hoveredItem);
-  }
-}*/
-
-/*canvas.addEventListener("touchstart", e => {
-  itemManager.triggerAction();
-
-canvas.addEventListener("click", (e) => {
-  const rect = canvas.getBoundingClientRect();
-  const x = e.clientX - rect.left;
-  const y = e.clientY - rect.top;
-
-  itemManager.handleClick(x, y);
-});*/
-/*const env={
-  scene01:{src:images[0],width:1000,
-    item:{
-      use:{
-        it01U00:{src:null,x:750,y:100,w:10,h:10,view:false,
-          action:[conslog(),conslog("it01L00")]
-        },
-        it01U01:{src:null,x:900,y:100,w:10,h:10,view:false,
-          action:[conslog()]
-        }
-      },
-      loot:{
-        it01L00:{src:null,x:750,y:250,w:10,h:10,view:true,lootNb:1,
-          with:"it01U00"
-        },
-        it01L01:{src:null,x:900,y:250,w:10,h:10,view:false,lootNb:null,
-          with:"player"
-        }
-      },
-      decor:{
-        it01D00:{src:null,x:240,y:100,w:10,h:10,view:false},
-        it01D01:{src:null,x:490,y:100,w:10,h:10,view:false}
-      }
-    }
-  }
-}
-function conslog(itName=null){
-  if (itName!=null){
-    console.log("items associés : ",env.scene01.item.loot.${itName})
-  } else {
-    console.log("item utilisés")
-  }
-}*/
+let decorHeight = HEIGHT * scene.width / scene.height;
 console.log("Variables déclarées !")
 showStartScreen();
 chargMedia();
@@ -454,140 +312,6 @@ skinPlayer = images[6];
 console.log("Validation...");
 Run(env);
 function breakRun(projet) { return new Promise(License => setTimeout(License, projet)); }
-async function Run(env) {
-  console.log(env[0], scene); // OK
-  waitForUserStart();
-  console.log("logo :");
-  await breakRun(457);
-  async function realStartSequence() {
-    console.log("Démarrage réel du jeu...");
-    ///////////////////////////////////////////////////////////////////////
-    playSound("neon", { fadeIn: 1, /*fadeOut: 1,*/ finSon: 3.7 });
-    // Fade-out progressif
-    ctx.fillStyle = "black";
-    ctx.fillRect(0, 0, WIDTH, HEIGHT);
-    await breakRun(500); ///////Puis CLIc
-    drawZoomOscill(images[3], 1);//ctx.drawImage(images[3], -WIDTH / 2, 0);
-    ctx.fillStyle = 'rgba(0,0,0,0.8)';
-    //ctx.fillRect(0, 203, WIDTH, HEIGHT);
-    await fadeOutLogo(50);
-    drawZoomOscill(images[3], 1);// ctx.drawImage(images[3], -WIDTH / 2, 0);
-    ctx.fillStyle = 'rgba(0,0,0,0.8)';
-    //  ctx.fillRect(0, 203, WIDTH, HEIGHT);
-    await fadeOutLogo(50);
-    drawZoomOscill(images[3], 1);//ctx.drawImage(images[3], -WIDTH / 2, 0);
-    // Joue un premier son si tu veux :
-    await breakRun(1000);
-    playSound("tension1", { volume: 0.8, fadeIn: 2, fadeOut: 4 });
-    await breakRun(500);
-    // Appel : cycle complet (aller-retour)
-    animatePingPong(images[3], 15, 6000);  // 2 secondes total
-    await breakRun(400);
-    await fadeOutLogo(50);
-    drawZoomOscill(images[3], 1);
-    await fadeOutLogo(50);
-    drawZoomOscill(images[3], 1);
-    await breakRun(500);
-    await fadeOutLogo(100);
-    drawZoomOscill(images[3], 1);
-    await fadeOutLogo(100);
-    drawZoomOscill(images[3], 1);
-    await fadeOutLogo(100);
-    drawZoomOscill(images[3], 1);
-    await breakRun(3300);
-    playSound("glitch1", { volume: 1, fadeOut: 1 });
-    await breakRun(100);
-    drawZoomOscill(images[4], 1);
-    await fadeOutLogo(12);
-    drawZoomOscill(images[4], 1);
-    await fadeOutLogo(13);
-    await breakRun(100);
-    await fadeOutLogo(25);
-    drawZoomOscill(images[4], 1);
-    await fadeOutLogo(25);
-    drawZoomOscill(images[4], 1.1);
-    await fadeOutLogo(25);
-    drawZoomOscill(images[4], 1.2);
-    await fadeOutLogo(25);
-    drawZoomOscill(images[4], 1.3);
-    await fadeOutLogo(25);
-    drawZoomOscill(images[4], 1.4);
-    await breakRun(1000);
-    await breakRun(2457);
-    /////////////////////////////////////////////////////////////
-    /*Algo - A PLACER
-            ///////////////////////////////////////
-            - // Créer un objet Image
-            -
-            ----------------------------------------
-            ALGO
-            ----------------------------------------
-            *-ECRAN DE DEMARRAGE (LOGO breakRunDIGITALS)*/
-    //        **fondu⁰⁰
-    //*-MENU *******************************
-    // --- INPUT ---
-    GestionClavier();
-    GestionTactile();
-    ecouteTouchePause();
-    createButton("F1-P:Pause", 7, () => {
-      paused = !paused;   // ou paused = !paused pour toggle
-      console.log("Toggle pause !");
-    });
-    createButton("Esp:Courir", 4, () => { keys.space = true; })
-    //userInactif();
-    function userInactif() {
-      // Aucune activité utilisateur (clavier et tactile) donne true dans isImmobile
-      if (!keys.left && !keys.right && !keys.up && !keys.down && !touchDir) {
-        isImmobile = true;
-      }
-      else { isImmobile = false; }
-      //setTimeout(userInactif, 1000); // vérifie toutes les secondes  
-    }
-    // --- GAME LOOP ---
-    // debutPartie:
-    playSound("Noel", { volume: 0.4, fadeIn: 100 });
-    loop();
-    //// ///////////////////////////////////////////////////////
-    ///           fadeOutLogo           ///////////////////////
-    // ///////////////////////////////////////////////////////
-    function animatePingPong(img, angleMax, duration) {
-      const start = performance.now();
-      requestAnimationFrame(loop);
-      function loop(now) {
-        let t = (now - start) / duration;
-        if (t > 1) t = 1;
-        // t = 0→1 puis retour 1→0 → sinus
-        const pingpong = Math.sin(t * Math.PI);
-        const angle = pingpong * (angleMax * Math.PI / 180);
-        drawZoomOscill(img, 1.15, angle);
-        if (t < 1) requestAnimationFrame(loop);  // arrêt automatique
-      }
-    }
-
-  }
-  function waitForUserStart() {
-    document.addEventListener("keydown", keyStart);
-    canvas.addEventListener("touchstart", touchStart);
-    function keyStart(e) {
-      if (e.code === "Space") { clavierUse = true; startGame(); }
-    }
-    function touchStart() {
-      startGame();
-    }
-    function startGame() {
-      if (gameStarted) return;
-      gameStarted = true;
-      console.log("Clavier (!=Tactile) : ", clavierUse);
-      // Débloque le contexte audio (= indispensable sur mobile)
-      if (audioCtx.state === "suspended") {
-        audioCtx.resume();
-      }
-      document.removeEventListener("keydown", keyStart);
-      canvas.removeEventListener("touchstart", touchStart);
-      realStartSequence(); // On lance vraiment ton jeu
-    }
-  }
-}
 function loop(timestamp) {
   //if (isLoopRunning) return;  // Évite doublons
   //isLoopRunning = true;
@@ -623,6 +347,7 @@ function update() {
   screenWall();
 
   updateHover(cursor.x, cursor.y);
+  actionClavier(keys.b);
   // Check "tâches"
   incTaskOrWin(); //cursor{}, tasksDone, requiredTasks, endGame()   
   //Demi-tour perso
@@ -635,53 +360,6 @@ function update() {
       ctx.drawImage(img, 0, 0);
       ctx.restore();
     }*/
-}
-function endGame(success) {
-  if (gameOver) return;   // <-- stoppe les appels multiples
-  gameOver = true;
-  setTimeout(() => {
-    alert(success ? "Tu as survécu!" : "Le monstre t’a attrapé!");
-    changeGame();
-    timeLeft = 60; gameOver = false; tasksDone = 0; cameraX = 0;
-    //    cursor = { x: WIDTH / 2, y: HEIGHT / 2, w: 16, h: 16, speed: 1.5 };
-    cursor.x = WIDTH / 2; cursor.y = HEIGHT / 2; cursor.speed = 1.5;
-    if (rafId !== null) {
-      cancelAnimationFrame(rafId);
-      rafId = null;
-    }
-    // Relance une seule boucle propre
-    lastTimestamp = performance.now();  // très important !
-    rafId = requestAnimationFrame(loop);  // ← uniquement ici
-  }, 500);
-}
-function changeGame() { //  marche pas !!
-  // éclair
-  console.log("Eclair !");
-  ctx.fillStyle = "#ffffffff";
-  ctx.fillRect(0, 0, WIDTH, HEIGHT);
-  for (let i = 0; i < 10000; i += 1) { }
-  //console.log("vitLmp : ", vitesseLampe, " c.speed : ", cursor.speed, "framMS : ", spriteAnimTimer);
-}
-
-function fadeOutLogo(duration = 1500) {
-  return new Promise(resolve => {
-    let start = null;
-    function step(timestamp) {
-      if (!start) start = timestamp;
-      const progress = Math.min((timestamp - start) / duration, 1);
-      // dessine le logo
-      drawZoomOscill(images[3], 1); //ctx.drawImage(images[3], 0, 0);
-      // couche noire qui augmente
-      ctx.fillStyle = `rgba(0,0,0,${progress})`;
-      ctx.fillRect(0, 0, WIDTH, HEIGHT);
-      if (progress < 1) {
-        requestAnimationFrame(step);
-      } else {
-        resolve();
-      }
-    }
-    requestAnimationFrame(step);
-  });
 }
 function draw() {
   // Calcul centrage et échelle
@@ -701,7 +379,7 @@ function draw() {
     images[scene.indexSrc],
     cameraX, 0,          // zone du décor à afficher
     viewAssetWidth, scene.height,   // portion du décor
-    0, 0, WIDTH, HEIGHT//(15625000 * scene.width) / (scene.height * scene.height * scene.height) // position sur le canvas
+    0, 0, viewWidth, HEIGHT//(15625000 * scene.width) / (scene.height * scene.height * scene.height) // position sur le canvas
     //               37/   1458          15 625 000 000/7 812 500 000             421 875 000 / 5 359 375     
   );// Dessiner uniquement la portion visible du décor*/
   ctx.globalCompositeOperation = "source-over"; // par défaut 
@@ -713,18 +391,19 @@ function draw() {
   //Dessin effet lampe de poche
   const radius = 120;
   //ctx.save();//sauvegarde état
-  ctx.fillStyle = "rgba(4, 0, 60, 0.8)"; // obscurité
+  //ctx.fillStyle = "rgba(4, 0, 60, 0.7)"; 
+  ctx.fillStyle = `rgba(4,0,60,${obscurite})`; // obscurité
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
   itemManager.draw(ctx); // dessin décor + items
-  ctx.fillStyle = "rgba(242, 254, 8, 0.2)"; // zone éclairée
+  ctx.fillStyle = `rgba(242,254,8,${consoBatterie})`; // zone éclairée`// 'rgba(242, 254, 8, ${etatBatterie})';
   ctx.beginPath();
   ctx.arc(cursor.x + cursor.w / 2, cursor.y + cursor.h / 2, radius, 0, Math.PI * 2);
   ctx.fill();
-  ctx.globalAlpha = 0.6;
+  ctx.globalAlpha = 0.7;
   ctx.drawImage(
     images[2], 500 - (cursor.x + cursor.w / 2), 500 - (cursor.y + cursor.h / 2),          // zone du décor à afficher
     WIDTH, HEIGHT,   // portion du décor
-    0, 0, WIDTH, HEIGHT  // position sur le canvas
+    0, 0, viewWidth, HEIGHT  // position sur le canvas
   );// Dessiner uniquement la portion visible du décor*/
   ctx.globalAlpha = 1;
   ctx.save();
@@ -821,6 +500,161 @@ function showStartScreen() {
 /*function newGame() {
   continue debutPartie;
 }*/
+function fadeOutLogo(duration = 1500) {
+  return new Promise(resolve => {
+    let start = null;
+    function step(timestamp) {
+      if (!start) start = timestamp;
+      const progress = Math.min((timestamp - start) / duration, 1);
+      // dessine le logo
+      drawZoomOscill(images[3], 1); //ctx.drawImage(images[3], 0, 0);
+      // couche noire qui augmente
+      ctx.fillStyle = `rgba(0,0,0,${progress})`;
+      ctx.fillRect(0, 0, WIDTH, HEIGHT);
+      if (progress < 1) {
+        requestAnimationFrame(step);
+      } else {
+        resolve();
+      }
+    }
+    requestAnimationFrame(step);
+  });
+}
+async function Run(env) {
+  console.log(env[0], scene); // OK
+  waitForUserStart();
+  console.log("logo :");
+  await breakRun(457);
+  async function realStartSequence() {
+    console.log("Démarrage réel du jeu...");
+    ///////////////////////////////////////////////////////////////////////
+    playSound("neon", { fadeIn: 1, /*fadeOut: 1,*/ finSon: 3.7 });
+    // Fade-out progressif
+    ctx.fillStyle = "black";
+    ctx.fillRect(0, 0, WIDTH, HEIGHT);
+    await breakRun(500); ///////Puis CLIc
+    drawZoomOscill(images[3], 1);//ctx.drawImage(images[3], -WIDTH / 2, 0);
+    ctx.fillStyle = 'rgba(0,0,0,0.8)';
+    //ctx.fillRect(0, 203, WIDTH, HEIGHT);
+    await fadeOutLogo(50);
+    drawZoomOscill(images[3], 1);// ctx.drawImage(images[3], -WIDTH / 2, 0);
+    ctx.fillStyle = 'rgba(0,0,0,0.8)';
+    //  ctx.fillRect(0, 203, WIDTH, HEIGHT);
+    await fadeOutLogo(50);
+    drawZoomOscill(images[3], 1);//ctx.drawImage(images[3], -WIDTH / 2, 0);
+    // Joue un premier son si tu veux :
+    await breakRun(1000);
+    playSound("tension1", { volume: 0.8, fadeIn: 2, fadeOut: 4 });
+    await breakRun(500);
+    // Appel : cycle complet (aller-retour)
+    animatePingPong(images[3], 15, 6000);  // 2 secondes total
+    await breakRun(400);
+    await fadeOutLogo(50);
+    drawZoomOscill(images[3], 1);
+    await fadeOutLogo(50);
+    drawZoomOscill(images[3], 1);
+    await breakRun(500);
+    await fadeOutLogo(100);
+    drawZoomOscill(images[3], 1);
+    await fadeOutLogo(100);
+    drawZoomOscill(images[3], 1);
+    await fadeOutLogo(100);
+    drawZoomOscill(images[3], 1);
+    await breakRun(3300);
+    playSound("glitch1", { volume: 1, fadeOut: 1 });
+    await breakRun(100);
+    drawZoomOscill(images[4], 1);
+    await fadeOutLogo(12);
+    drawZoomOscill(images[4], 1);
+    await fadeOutLogo(13);
+    await breakRun(100);
+    await fadeOutLogo(25);
+    drawZoomOscill(images[4], 1);
+    await fadeOutLogo(25);
+    drawZoomOscill(images[4], 1.1);
+    await fadeOutLogo(25);
+    drawZoomOscill(images[4], 1.2);
+    await fadeOutLogo(25);
+    drawZoomOscill(images[4], 1.3);
+    await fadeOutLogo(25);
+    drawZoomOscill(images[4], 1.4);
+    await breakRun(1000);
+    await breakRun(2457);
+    /////////////////////////////////////////////////////////////
+    /*Algo - A PLACER
+            ///////////////////////////////////////
+            - // Créer un objet Image
+            -
+            ----------------------------------------
+            ALGO
+            ----------------------------------------
+            *-ECRAN DE DEMARRAGE (LOGO breakRunDIGITALS)*/
+    //        **fondu⁰⁰
+    //*-MENU *******************************
+    // --- INPUT ---
+    GestionClavier();
+    GestionTactile();
+
+    ecouteTouchePause();
+    createButton("F1-P:Pause", 7, () => {
+      paused = !paused;   // ou paused = !paused pour toggle
+      console.log("Toggle pause !");
+    });
+    createButton("Esp:Courir", 4, () => { keys.space = true; })
+    //userInactif();
+    function userInactif() {
+      // Aucune activité utilisateur (clavier et tactile) donne true dans isImmobile
+      if (!keys.left && !keys.right && !keys.up && !keys.down && !touchDir) {
+        isImmobile = true;
+      }
+      else { isImmobile = false; }
+      //setTimeout(userInactif, 1000); // vérifie toutes les secondes  
+    }
+    // --- GAME LOOP ---
+    // debutPartie:
+    playSound("Noel", { volume: 0.6, fadeIn: 100 });
+    loop();
+    //// ///////////////////////////////////////////////////////
+    ///           fadeOutLogo           ///////////////////////
+    // ///////////////////////////////////////////////////////
+    function animatePingPong(img, angleMax, duration) {
+      const start = performance.now();
+      requestAnimationFrame(loop);
+      function loop(now) {
+        let t = (now - start) / duration;
+        if (t > 1) t = 1;
+        // t = 0→1 puis retour 1→0 → sinus
+        const pingpong = Math.sin(t * Math.PI);
+        const angle = pingpong * (angleMax * Math.PI / 180);
+        drawZoomOscill(img, 1.15, angle);
+        if (t < 1) requestAnimationFrame(loop);  // arrêt automatique
+      }
+    }
+
+  }
+  function waitForUserStart() {
+    document.addEventListener("keydown", keyStart);
+    canvas.addEventListener("touchstart", touchStart);
+    function keyStart(e) {
+      if (e.code === "Space") { clavierUse = true; startGame(); }
+    }
+    function touchStart() {
+      startGame();
+    }
+    function startGame() {
+      if (gameStarted) return;
+      gameStarted = true;
+      console.log("Clavier (!=Tactile) : ", clavierUse);
+      // Débloque le contexte audio (= indispensable sur mobile)
+      if (audioCtx.state === "suspended") {
+        audioCtx.resume();
+      }
+      document.removeEventListener("keydown", keyStart);
+      canvas.removeEventListener("touchstart", touchStart);
+      realStartSequence(); // On lance vraiment ton jeu
+    }
+  }
+}
 function playSound(name, options = {}) {
   const {
     volume = 1,
@@ -871,6 +705,24 @@ function playSound(name, options = {}) {
   }
   return { src, gain };
 }
+/*document.addEventListener("keydown", e => {
+  if (e.key === "b" || e.key === "B") {
+    if (hoveredItem) {
+      itemManager.trigger(hoveredItem);
+    }
+    itemManager.doAction();
+  }
+});*/
+function actionClavier(key = false) {
+  if (key) {
+    if (hoveredItem) {
+      itemManager.trigger(hoveredItem);
+    }
+    itemManager.doAction();
+    console.log("ActionClavier OK. key: ", key);
+    return key;
+  }
+}
 function GestionClavier() {  // const keys = { left: false, right: false, up: false, down: false, param: false };
   window.addEventListener("keydown", e => {
     if (e.key === "ArrowLeft") keys.left = true;
@@ -878,6 +730,7 @@ function GestionClavier() {  // const keys = { left: false, right: false, up: fa
     if (e.key === "ArrowUp") keys.up = true;
     if (e.key === "ArrowDown") keys.down = true;
     if (e.key === " " || e.key === "Space") keys.space = true;
+    if (e.key === "b" || e.key === "B") keys.b = true;
   });
   window.addEventListener("keyup", e => {
     if (e.key === "ArrowLeft") keys.left = false;
@@ -885,6 +738,7 @@ function GestionClavier() {  // const keys = { left: false, right: false, up: fa
     if (e.key === "ArrowUp") keys.up = false;
     if (e.key === "ArrowDown") keys.down = false;
     if (e.key === " " || e.key === "Space") keys.space = false;
+    if (e.key === "b" || e.key === "B") keys.b = false;
   });
 }
 function GestionTactile() {
@@ -912,7 +766,7 @@ function handleTouch(e) {
   const x = touch.clientX - rect.left;
   const y = touch.clientY - rect.top;
 
-  handlePointer(x, y);
+  handlePointer(x, y); //Pointage Buttons
 
   //si 1er contact -> fixer le centre
   if (touchStartX === null) {
@@ -943,6 +797,7 @@ function handleTouch(e) {
   // 2. Si un item est touché → effectuer l’action
   if (hoveredItem) {
     itemManager.trigger(hoveredItem);
+    //A régler : il doit avoir également Touchend sur cette hoveredItem !!
   }
 }
 function moveClavier() {
@@ -1013,13 +868,6 @@ function defileTimerOrDie() {
   if (gameOver) return;
   timeLeft -= 1 / 60;
   if (timeLeft <= 0) endGame(false);
-}
-function incTaskOrWin() {
-  if (cursor.x < 20 && cursor.y < 20 && tasksDone < requiredTasks) {
-    tasksDone++;
-    cursor.x = 70; cursor.y = 100; // Retour position
-    if (tasksDone === requiredTasks) endGame(true);
-  }
 }
 function drawPauseOverlay() {
   ctx.fillStyle = "#6d6d6d7b";
@@ -1097,6 +945,83 @@ function updateSpriteAnimation(deltaMs) {
   }
   exCamera = cameraX;
 }
+function changeScene(sceneName) {
+  // Sauvegarde AVANT de quitter
+  if (scene && itemManager) {
+    sceneStates[scene.name] = itemManager.exportState();
+  }
+  // Trouver la scène
+  scene = env.find(s => s.name === sceneName);
+  if (!scene) return;
+  // Restaurer ou créer
+  const saved = sceneStates[scene.name] ?? null;
+  itemManager = new ItemManager(scene, saved);
+  viewAssetWidth = scene.height * (viewWidth / HEIGHT);
+  decorHeight = HEIGHT * scene.width / scene.height;
+  console.log("viewAssetWidth: ", viewAssetWidth, "decorHeight: ", decorHeight);
+  hoveredItem = null;
+  cameraX = scene.startSc ?? 0;
+  console.log(
+    "Scene chargée :",
+    scene.name,
+    saved ? "(état restauré)" : "(état neuf)"
+  );
+  console.log("ScenPrec: ", itemManager);
+}
+function drawLoot() {
+  const pos = buttonPositions[6];
+  ctx.strokeStyle = couleurBtn;
+  ctx.lineWidth = 2;
+  ctx.strokeRect(pos.x, pos.y, pos.w, pos.h);
+  //DESSINER LIGNES 
+  ctx.beginPath();
+  for (idNbPlb = 1; idNbPlb < NbPlaceLoot; idNbPlb++) {     //0 no
+    ctx.moveTo(pos.x + idNbPlb * pos.w / NbPlaceLoot, pos.y); //3,1 -> 3,1->x+id*w/Nb
+    ctx.lineTo(pos.x + idNbPlb * pos.w / NbPlaceLoot, pos.y + pos.h);
+  }
+  ctx.stroke();
+  return pos;
+}
+function updateHover(cursorX, cursorY) {
+  hoveredItem = null;
+  for (const item of Object.values(itemManager.items)) {
+    if (item.view && item.contains(cursorX, cursorY)) {
+      hoveredItem = item;
+      break;
+    }
+  }
+}
+function endGame(success) {
+  if (gameOver) return;   // <-- stoppe les appels multiples
+  gameOver = true;
+  setTimeout(() => {
+    alert(success ? "Tu as survécu!" : "Le monstre t’a attrapé!");
+    alert("Merci d'avoir participé !\n\nRevenez dans 24h. ;-)");//
+
+    changeGame();
+    timeLeft = 60; gameOver = false; tasksDone = 0; cameraX = 0;
+    /*  scene=env[0];
+      changeScene(scene); saved=null;*/
+    //    cursor = { x: WIDTH / 2, y: HEIGHT / 2, w: 16, h: 16, speed: 1.5 };
+    cursor.x = WIDTH / 2; cursor.y = HEIGHT / 2; cursor.speed = 1.5;
+    if (rafId !== null) {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+    // Relance une seule boucle propre
+    lastTimestamp = performance.now();  // très important !
+    rafId = requestAnimationFrame(loop);  // ← uniquement ici
+  }, 500);
+}
+function changeGame() { //  marche pas !!
+  // éclair
+  console.log("Eclair !");
+  ctx.fillStyle = "#ffffffff";
+  ctx.fillRect(0, 0, WIDTH, HEIGHT);
+  for (let i = 0; i < 10000; i += 1) { }
+  //console.log("vitLmp : ", vitesseLampe, " c.speed : ", cursor.speed, "framMS : ", spriteAnimTimer);
+}
+
 //  function enleveCouleur() {
 // 1️⃣ Affiche l’image
 //ctx.drawImage(images[1], offsetX, offsetY, drawW, drawH);
