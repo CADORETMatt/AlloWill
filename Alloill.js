@@ -10,7 +10,7 @@ console.log("Canvas interne :", canvas.width, canvas.height);
 let viewWidth = WIDTH;   // largeur de la fenêtre visible
 let gameStarted = false;
 // --- GAME STATE ---
-let volumeMusic = 0; // entre 0/1
+let volumeMusic = 0.6; // entre 0/1
 let timeLeft = 60;                          //
 let gameOver = false;                       //
 let tasksDone = 0;                          //
