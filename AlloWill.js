@@ -10,6 +10,7 @@ console.log("Canvas interne :", canvas.width, canvas.height);
 let viewWidth = WIDTH;   // largeur de la fenêtre visible
 let gameStarted = false;
 // --- GAME STATE ---
+let volumeMusic = 0; // entre 0/1
 let timeLeft = 60;                          //
 let gameOver = false;                       //
 let tasksDone = 0;                          //
@@ -91,7 +92,7 @@ const srcList = [
 let loaded = 0;
 ///////////////  ITEMS  /////////////////////////////
 let hoveredItem = null;  // item actuellement sous le curseur
-const env = [
+const sceneData = [
   {
     name: "scene01",
     width: 1000, height: 250,
@@ -158,34 +159,14 @@ const env = [
     ]
   }
 ];
-let scene = env[0];
+let scene = sceneData[0];
 //let ratioDecor = scene.width / scene.height;
 let viewAssetWidth = scene.height * (viewWidth / HEIGHT);
 const NbPlaceLoot = 3;  //Emplacements inventaire
-function incTaskOrWin() {
-  // let porte3ok = false;
-  //if (hoveredItem && hoveredItem.id === "porte03") porte3ok = true;
-  //console.log("taskdone: ", tasksDone, " hoveredItem : ", hoveredItem, " key.b: ", keys.b);
-  if (inv.slots[2] != null && hoveredItem && hoveredItem.id === "porte03" && keys.b === true) { // ||  voir handlePointer ?
-    //if (tasksDone < requiredTasks) {
-    tasksDone++;
-    /*  if (inv.slots[2] != null && itemManager.items["porte01"]?.name === "porte01") {
-        ////////////// FIN ///////////////////////////////////////////
-        alert("Merci d'avoir participé !\n\nRevenez dans 24h. ;-)");//
-        //////////////////////////////////////////////////////////////
-      } */
-  }
-  //cursor.x = 70; cursor.y = 100; // Retour position
-  if (tasksDone >= requiredTasks) {
-    endGame(true);
-  }
-  //}
-}
 class Inventaire { // On peut imaginer d'autres inventaires (coffre, PNJ, ...)
   constructor(taille) {
     this.slots = Array(taille).fill(null);
   }
-
   add(item) {
     const i = this.slots.indexOf(null);
     if (i === -1) return false;      // inventaire plein
@@ -310,7 +291,7 @@ chargMedia();
 skinPlayer = images[6];
 //PlayerImg = images[1];
 console.log("Validation...");
-Run(env);
+Run(sceneData);
 function breakRun(projet) { return new Promise(License => setTimeout(License, projet)); }
 function loop(timestamp) {
   //if (isLoopRunning) return;  // Évite doublons
@@ -420,6 +401,19 @@ function draw() {
   ctx.restore();
   inv.affInv();
 }
+//////////////////////////////////////////////////////////////////////
+////////////////      But du jeu         ////////////////////////////
+///////////////////////////////////////////////////////////////////
+function incTaskOrWin() {
+  //console.log("taskdone: ", tasksDone, " hoveredItem : ", hoveredItem, " key.b: ", keys.b);
+  if (inv.slots[2] != null && hoveredItem && hoveredItem.id === "porte03" && keys.b === true) { // ||  voir handlePointer ?
+    tasksDone++;
+  }
+  //cursor.x = 70; cursor.y = 100; // Retour position
+  if (tasksDone >= requiredTasks) {
+    endGame(true);
+  }
+}
 //**JEU***********************************
 /*       ***affichage décor
 ***Le joueur est au centre
@@ -520,8 +514,8 @@ function fadeOutLogo(duration = 1500) {
     requestAnimationFrame(step);
   });
 }
-async function Run(env) {
-  console.log(env[0], scene); // OK
+async function Run(sceneData) {
+  console.log(sceneData[0], scene); // OK
   waitForUserStart();
   console.log("logo :");
   await breakRun(457);
@@ -612,7 +606,7 @@ async function Run(env) {
     }
     // --- GAME LOOP ---
     // debutPartie:
-    playSound("Noel", { volume: 0.6, fadeIn: 100 });
+    playSound("Noel", { volume: volumeMusic, fadeIn: 100 });
     loop();
     //// ///////////////////////////////////////////////////////
     ///           fadeOutLogo           ///////////////////////
@@ -951,7 +945,7 @@ function changeScene(sceneName) {
     sceneStates[scene.name] = itemManager.exportState();
   }
   // Trouver la scène
-  scene = env.find(s => s.name === sceneName);
+  scene = sceneData.find(s => s.name === sceneName);
   if (!scene) return;
   // Restaurer ou créer
   const saved = sceneStates[scene.name] ?? null;
@@ -1000,7 +994,7 @@ function endGame(success) {
 
     changeGame();
     timeLeft = 60; gameOver = false; tasksDone = 0; cameraX = 0;
-    /*  scene=env[0];
+    /*  scene=sceneData[0];
       changeScene(scene); saved=null;*/
     //    cursor = { x: WIDTH / 2, y: HEIGHT / 2, w: 16, h: 16, speed: 1.5 };
     cursor.x = WIDTH / 2; cursor.y = HEIGHT / 2; cursor.speed = 1.5;
