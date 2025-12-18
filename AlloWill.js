@@ -202,7 +202,7 @@ class ItemManager {
   exportState() {
     return Object.values(this.items).map(it => structuredClone(it));
   }
-  draw(ctx) {
+  /*draw(ctx) {
     for (const item of Object.values(this.items)) {
       item.draw(ctx);
       if (item === hoveredItem) { // AFFICHER LE CADRE si le curseur est dessus
@@ -211,7 +211,7 @@ class ItemManager {
         ctx.strokeRect(item.x - cameraX * 2, item.y, item.w, item.h);
       }
     }
-  }
+  }*/
   trigger(item) {
     if (!item) return;
     if (item.type === "loot") { //Loot = Récup
@@ -263,19 +263,19 @@ class Item {
     this.id = id;
     Object.assign(this, data);
   }
-  draw(ctx) {
-    //let img = new Image();//[this.srcIt];
-    //img.src = this.srcIt;
-    if (!this.view) return;
-    if (images[this.indexSrc])/*instanceof HTMLImageElement) { != "" /*&& this.type !== "decor")*/ {
-      //console.log("Source de l'item imag8: ", images[this.indexSrc]/*, ". tab : ", img[0], ". img : ", img, ". src: ", this.srcIt*/);
-      ctx.drawImage(images[this.indexSrc]/*images[8]*/, this.x - cameraX * 2, this.y, this.w, this.h);
-    } else {
-      // console.log("Pas de src");
-      ctx.fillStyle = "#d2ed0a23";
-      ctx.fillRect(this.x - cameraX * 2, this.y, this.w, this.h);
-    }
-  }
+  //draw(ctx) {
+  //let img = new Image();//[this.srcIt];
+  //img.src = this.srcIt;
+  //  if (!this.view) return;
+  //if (images[this.indexSrc])/*instanceof HTMLImageElement) { != "" *//*&& this.type !== "decor")*/ {
+  //console.log("Source de l'item imag8: ", images[this.indexSrc]/*, ". tab : ", img[0], ". img : ", img, ". src: ", this.srcIt*/);
+  //ctx.drawImage(images[this.indexSrc]/*images[8]*/, this.x - cameraX * 2, this.y, this.w, this.h);
+  //} else {
+  // console.log("Pas de src");
+  //ctx.fillStyle = "#d2ed0a23";
+  //ctx.fillRect(this.x - cameraX * 2, this.y, this.w, this.h);
+  //}
+  //}
   contains(px, py) {
     return px >= this.x - cameraX * 2 && px <= this.x - cameraX * 2 + this.w &&
       py >= this.y && py <= this.y + this.h;
@@ -293,34 +293,12 @@ skinPlayer = images[6];
 console.log("Validation...");
 Run(sceneData);
 function breakRun(projet) { return new Promise(License => setTimeout(License, projet)); }
-function loop(timestamp) {
-  //if (isLoopRunning) return;  // Évite doublons
-  //isLoopRunning = true;
-  // ... code ...
+////////////////////LOOPSTOP/////////////////
+function update(timestamp) {
   const now = timestamp || performance.now();
   const delta = now - lastTimestamp;
   lastTimestamp = now;
-  // userInactif();
-  if (!paused) {
-    // si clavier et tactile inactifs, isImmobile = true
-    if (!isImmobile) {
-      update();
-      // mise à jour de l'animation de la sprite selon le déplacement de la caméra
-      updateSpriteAnimation(delta);
-      draw();
-    }
-    defileTimerOrDie();
-    //console.log("Aff. Loop/Timer.");
-    Timer();
-  } else {
-    console.log("En pause : ", paused);
-    drawPauseOverlay();
-    affOptions();
-  }
-  rafId = requestAnimationFrame(loop);
-  //requestAnimationFrame(loop);
-}
-function update() {
+
   if (gameOver) return;
   moveClavier();
   moveTactile();  // tactile orienté
@@ -341,8 +319,10 @@ function update() {
       ctx.drawImage(img, 0, 0);
       ctx.restore();
     }*/
+  updateSpriteAnimation(delta);
+  defileTimerOrDie();
 }
-function draw() {
+function drawSTOP() {
   // Calcul centrage et échelle
 
   // let ratioH = HEIGHT / scene.height;
@@ -1014,6 +994,173 @@ function changeGame() { //  marche pas !!
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
   for (let i = 0; i < 10000; i += 1) { }
   //console.log("vitLmp : ", vitesseLampe, " c.speed : ", cursor.speed, "framMS : ", spriteAnimTimer);
+}
+///////////////////////////////
+// 🎨 RENDER ENGINE
+///////////////////////////////
+let currentScene = sceneData[0];
+function renderGame(ctx) {
+  clearScreen(ctx);
+  renderScene(ctx);
+  renderItems(ctx);
+  renderPlayer(ctx);
+  renderUI(ctx);
+  if (paused) renderPause(ctx);
+}
+function clearScreen(ctx) {
+  ctx.clearRect(0, 0, WIDTH, HEIGHT);
+}
+function renderScene(ctx) {
+  const img = currentScene.indexSrc;
+  if (img == null) return;
+  if (!isImmobile) {
+    //console.log("img: ", img, " currentScene.src: ", currentScene.indexSrc);
+    ctx.drawImage(
+      images[scene.indexSrc],
+      cameraX, 0,          // zone du décor à afficher
+      viewAssetWidth, scene.height,   // portion du décor
+      0, 0, viewWidth, HEIGHT//(15625000 * scene.width) / (scene.height * scene.height * scene.height) // position sur le canvas
+      //               37/   1458          15 625 000 000/7 812 500 000             421 875 000 / 5 359 375     
+    );// Dessiner uniquement la portion visible du décor*/
+    ctx.globalCompositeOperation = "source-over"; // par défaut 
+    //ctx.globalAlpha = 0.25;//opacité pour ombre personnage
+    //ctx.globalAlpha = 1;
+
+    //draw();
+  }
+}
+/*function renderItems(ctx) {
+  const items = itemManager.items;
+  for (const id in items) {
+    const item = items[id];
+    if (!item.view) continue;
+    const screenX = item.x - cameraX;
+    const screenY = item.y;
+    if (item.type !== "decor" && item.img) {
+      ctx.drawImage(item.img, screenX, screenY, item.w, item.h);
+    } else {
+      // debug visuel
+      ctx.fillStyle = "#ed0a0a42";
+      ctx.fillRect(screenX, screenY, item.w, item.h);
+    }
+  //for (const item of Object.values(itemMananger.items)) {
+     // item.draw(ctx);
+    if (item === hoveredItem) { // AFFICHER LE CADRE si le curseur est dessus
+      ctx.strokeStyle = "yellow";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(item.x - cameraX * 2, item.y, item.w, item.h);
+    }
+  }
+} ///}*/
+function renderItems(ctx) {
+  const items = itemManager.items;
+
+  for (const id in items) {
+    const item = items[id];
+    if (!item.view) continue;
+    // 🌍 → 🖥️ conversion monde → écran
+    const screenX = item.x - cameraX;
+    const screenY = item.y;
+    // ⚠️ Hors écran → inutile de dessiner
+    if (
+      screenX + item.w < 0 ||
+      screenX > WIDTH ||
+      screenY + item.h < 0 ||
+      screenY > HEIGHT
+    ) continue;
+    // 🖼️ dessin
+    const img = images[item.indexSrc];
+    if (item.type !== "decor" && img) {
+      ctx.drawImage(img, screenX, screenY, item.w, item.h);
+    } else {
+      // fallback debug
+      ctx.fillStyle = "#ed0a0a42";
+      ctx.fillRect(screenX, screenY, item.w, item.h);
+    }
+    // 🟨 survol
+    if (item === hoveredItem) {
+      ctx.strokeStyle = "yellow";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(screenX, screenY, item.w, item.h);
+    }
+  }
+}
+function renderPlayer(ctx) {
+  const scaleDraw = 1;//Math.min(WIDTH / PlayerImg.width, HEIGHT / PlayerImg.height);
+  const drawW = skinPlayer.width * scaleDraw;
+  const drawH = skinPlayer.height * scaleDraw;
+  const offsetX = (WIDTH - drawW) / 2;
+  const offsetY = (HEIGHT - drawH) / 2;
+  // LightTarget
+  ctx.fillStyle = "rgba(255, 255, 255, 1)";
+  ctx.fillRect(cursor.x, cursor.y, cursor.w - 8, cursor.h - 8);
+  //Dessin effet lampe de poche
+  const radius = 120;
+  //ctx.save();//sauvegarde état
+  //ctx.fillStyle = "rgba(4, 0, 60, 0.7)"; 
+  ctx.fillStyle = `rgba(4,0,60,${obscurite})`; // obscurité
+  ctx.fillRect(0, 0, WIDTH, HEIGHT);
+  //  itemManager.draw(ctx); // dessin décor + items
+  ctx.fillStyle = `rgba(242,254,8,${consoBatterie})`; // zone éclairée`// 'rgba(242, 254, 8, ${etatBatterie})';
+  ctx.beginPath();
+  ctx.arc(cursor.x + cursor.w / 2, cursor.y + cursor.h / 2, radius, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.globalAlpha = 0.7;
+  ctx.drawImage(
+    images[2], 500 - (cursor.x + cursor.w / 2), 500 - (cursor.y + cursor.h / 2),          // zone du décor à afficher
+    WIDTH, HEIGHT,   // portion du décor
+    0, 0, viewWidth, HEIGHT  // position sur le canvas
+  );// Dessiner uniquement la portion visible du décor*/
+  ctx.globalAlpha = 1;
+  ctx.save();
+  // Animation sprite sheet (images[6])
+  // sourceX, sourceY, sourceW, sourceH, dx, dy, dw, dh
+  const srcX = spriteFrame * spriteFrameWidth;
+  ctx.drawImage(
+    skinPlayer,
+    srcX, 0, spriteFrameWidth, spriteFrameHeight,
+    offsetX + 275, offsetY, drawW - 570, drawH + 100
+  );
+  //ctx.fillStyle = "rgba(4, 0, 60, 0.3)"; // obscurité
+  //ctx.fillRect(0, 0, WIDTH, HEIGHT);
+  ctx.restore();
+
+}
+function renderUI(ctx) {
+  ctx.fillStyle = "#f33";
+  ctx.font = "20px Georgia";
+  ctx.fillText(`Temps: ${Math.ceil(timeLeft)}`, 5, 20);
+  ctx.fillText(`Tâches: ${tasksDone}/${requiredTasks}`, 5, 40);
+  drawButtons(buttons);//renderButtons(ctx); A FAIRE !!!
+  inv.affInv();
+}
+/*    console.log("En pause : ", paused);
+    drawPauseOverlay();
+    affOptions();
+*/
+function renderPause(ctx) {
+  console.log("En pause : ", paused);
+  drawPauseOverlay();
+  affOptions();
+}
+function loop() {
+  if (!paused) {
+    if (!isImmobile) {
+      update();
+    }
+  }
+  renderGame(ctx);
+  rafId = requestAnimationFrame(loop);
+}
+class ItemB { // A renommer !!!
+  constructor(id, data) {
+    Object.assign(this, data);
+    this.id = id;
+    this.img = data.src || null;
+  }
+  update() {
+    // collisions, logique, hover
+  }
 }
 
 //  function enleveCouleur() {
