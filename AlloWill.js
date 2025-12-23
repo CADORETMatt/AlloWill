@@ -591,6 +591,7 @@ async function Run(sceneData) {
     //// ///////////////////////////////////////////////////////
     ///           fadeOutLogo           ///////////////////////
     // ///////////////////////////////////////////////////////
+
     function animatePingPong(img, angleMax, duration) {
       const start = performance.now();
       requestAnimationFrame(loop);

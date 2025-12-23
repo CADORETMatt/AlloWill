@@ -605,8 +605,7 @@
             const numChannels = 2;
             const buffer = new ArrayBuffer(44 + interleaved.length * 2);
             const view = new DataView(buffer);
-            function writeString(view, offset, str) { for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i)); }
-            let offset = 0;
+            function writeString(view, offset, str) { for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i)); } let offset = 0;
             writeString(view, offset, 'RIFF'); offset += 4;
             view.setUint32(offset, 36 + interleaved.length * 2, true); offset += 4;
             writeString(view, offset, 'WAVE'); offset += 4;
