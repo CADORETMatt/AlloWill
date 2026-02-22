@@ -145,13 +145,13 @@
     <div class="card">
 
         <!-- MattMarket logo (local path provided) -->
-        <img id="logo" src="LogoMattMRKT.png" alt="Logo MattMarket (local)" onerror="this.style.display='none'">
+        <img id="logo" src="images/LogoMattMRKT.png" alt="Logo MattMarket (local)" onerror="this.style.display='none'">
 
         <h1>🎛️ Editeur de sample — Crossfade · Granular · Pan</h1>
         <p class="meta">Choisir un fichier local → sélectionner début/fin → options → prévisualiser / enregistrer</p>
 
         <label>Choisir un fichier audio</label>
-        <input id="audioFile" type="file" accept="audio/*">
+        <input placeholder="Aucun fichier chargé" id="audioFile" type="file" accept="audio/*">
 
         <div class="row">
             <div>
@@ -161,7 +161,7 @@
 
             <div>
                 <label>Nom du sample (export)</label>
-                <input id="sampleName" type="text" value="sample.wav">
+                <input id="sampleName" placeholder="Sample" type="text" value="sample.wav">
             </div>
         </div>
 
@@ -170,40 +170,41 @@
 
         <label>Fin (min:sec:ms)</label>
         <input id="endInput" type="text" value="00:02:000" placeholder="00:02:000">
-
+        <button type="button" id="inverse">Inverser le sample</button>
         <div class="row">
             <div>
                 <label>Boucles</label>
-                <input id="loopsInput" type="number" min="1" value="1">
+                <input id="loopsInput" placeholder="Lire en boucle" type="number" min="1" value="1">
             </div>
 
             <div>
                 <label>Crossfade (ms) — fade-in/out pour boucle parfaite</label>
-                <input id="crossfadeMs" type="number" min="0" value="20">
+                <input id="crossfadeMs" placeholder="crossfade" type="number" min="0" value="20">
             </div>
 
             <div>
                 <label>Réverb (%)</label>
-                <input id="reverbInput" type="number" min="0" max="100" value="0">
+                <input id="reverbInput" type="number" min="0" placeholder="reverb" max="100" value="0">
             </div>
         </div>
 
         <div class="row">
             <div>
                 <label>Granular — Time-stretch (factor)</label>
-                <input id="stretchFactor" type="number" step="0.1" min="0.25" max="4" value="1.0">
+                <input id="stretchFactor" type="number" placeholder="étirer" step="0.1" min="0.25" max="4" value="1.0">
                 <small class="note">1.0 = durée normale, &lt;1 = speed up, &gt;1 = stretch</small>
             </div>
 
             <div>
                 <label>Granular — Pitch (semitones)</label>
-                <input id="pitchSemis" type="number" step="1" min="-24" max="24" value="0">
+                <input id="pitchSemis" type="number" placeholder="pitch" step="1" min="-24" max="24" value="0">
                 <small class="note">+12 = +1 octave</small>
             </div>
 
             <div>
                 <label>Pan L ↔ R</label>
-                <input id="pan" type="range" min="-1" max="1" step="0.01" value="0" style="width:160px">
+                <input id="pan" type="range" placeholder="Balance" min="-1" max="1" step="0.01" value="0"
+                    style="width:160px">
                 <div id="panVal" style="display:inline-block;margin-left:8px">0.00</div>
             </div>
         </div>
@@ -269,6 +270,13 @@
         let currentNode = null;
         let lastBlobUrl = null;
         let modified = false;
+
+        //===========Inverser le son ==========================================
+        document.getElementById('inverse').addEventListener('click', () => {
+            for (let ch = 0; ch < srcBuffer.numberOfChannels; ch++) {
+                srcBuffer.getChannelData(ch).reverse();
+            }
+        });
 
         /* hide link on change and revoke old blob */
         function markChanged() { modified = true; if (lastBlobUrl) { URL.revokeObjectURL(lastBlobUrl); lastBlobUrl = null; } downloadLink.style.display = 'none'; downloadLink.className = ''; saveStatus.textContent = ''; }
